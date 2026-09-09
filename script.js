@@ -165,7 +165,16 @@ function addFiles(files){
  const valid=files.filter(f=>/^(image\/jpeg|image\/png)$/i.test(f.type));
  if(valid.length<files.length)showToast("Only JPG and PNG images are supported.");
  valid.forEach(file=>{
-   const item={file,url:URL.createObjectURL(file),rotation:0};
+   const item={
+        file,
+        url:URL.createObjectURL(file),
+        rotation:0,
+        naturalWidth:0,
+        naturalHeight:0,
+        pageSize:document.getElementById("pageSize").value,
+        orientation:document.getElementById("orientation").value,
+        margin:Number(document.getElementById("margin").value)||0
+      };
       pdfImages.push(item);
       captureNaturalSize(item);
  });
@@ -174,11 +183,10 @@ function addFiles(files){
 }
 
 function getPdfPageSpec(item){
-  const pageSize=document.getElementById("pageSize").value;
-  const orientation=document.getElementById("orientation").value;
-  const marginMm=Number(document.getElementById("margin").value)||0;
-  const iw=item.naturalWidth||item.file?.naturalWidth||1000;
-  const ih=item.naturalHeight||item.file?.naturalHeight||1400;
+  const pageSize=item.pageSize || document.getElementById("pageSize").value;
+  const orientation=item.orientation || document.getElementById("orientation").value;
+  const marginMm=Number(item.margin ?? document.getElementById("margin").value)||0;
+  const iw=item.naturalWidth||1000, ih=item.naturalHeight||1400;
 
   let pw=210, ph=297;
   if(pageSize==="letter"){ pw=215.9; ph=279.4; }
@@ -188,65 +196,73 @@ function getPdfPageSpec(item){
     pw=Math.max(25,pw); ph=Math.max(25,ph);
   }
 
-  if(pageSize!=="image"){
-    const landscape=orientation==="landscape" ||
-      (orientation==="auto" && iw>ih);
-    if(landscape){ const t=pw; pw=ph; ph=t; }
-  }else if(orientation==="landscape" && ph>pw){
-    const t=pw; pw=ph; ph=t;
-  }else if(orientation==="portrait" && pw>ph){
-    const t=pw; pw=ph; ph=t;
-  }
-  return {pw,ph,marginMm,iw,ih};
+  if(orientation==="landscape" && ph>pw){ const t=pw; pw=ph; ph=t; }
+  if(orientation==="portrait" && pw>ph){ const t=pw; pw=ph; ph=t; }
+  if(orientation==="auto" && pageSize!=="image" && iw>ih){ const t=pw; pw=ph; ph=t; }
+
+  return {pw,ph,marginMm,iw,ih,pageSize,orientation};
 }
+
+let selectedPdfPage=0;
 
 function updatePdfPreview(){
   const stage=document.getElementById("pdfPreviewStage");
   const empty=document.getElementById("previewEmpty");
   const count=document.getElementById("previewPageCount");
+  const title=document.getElementById("previewTitle");
   if(!stage)return;
-  stage.querySelectorAll(".preview-page").forEach(n=>n.remove());
 
-  count.textContent=`${pdfImages.length} ${pdfImages.length===1?"page":"pages"}`;
-  if(!pdfImages.length){
+  stage.querySelectorAll(".preview-page").forEach(n=>n.remove());
+  const total=pdfImages.length;
+  if(count) count.textContent=`${total} ${total===1?"page":"pages"}`;
+
+  if(total===0){
     if(empty) empty.style.display="";
+    if(title) title.textContent="Selected page";
     return;
   }
+
+  if(selectedPdfPage>=total) selectedPdfPage=total-1;
+  if(selectedPdfPage<0) selectedPdfPage=0;
+
   if(empty) empty.style.display="none";
+  const item=pdfImages[selectedPdfPage];
+  const s=getPdfPageSpec(item);
 
-  const first=pdfImages[0];
-  const spec=getPdfPageSpec(first);
-  const maxW=Math.min(stage.clientWidth-56,520);
-  const maxH=Math.min(stage.clientHeight-56,560);
-  const scale=Math.min(maxW/spec.pw,maxH/spec.ph);
+  const maxW=Math.max(180,stage.clientWidth-48);
+  const maxH=Math.max(260,stage.clientHeight-48);
+  const scale=Math.min(maxW/s.pw,maxH/s.ph);
 
-  pdfImages.forEach((item,index)=>{
-    const s=getPdfPageSpec(item);
-    const page=document.createElement("div");
-    page.className="preview-page";
-    page.style.width=`${s.pw*scale}px`;
-    page.style.height=`${s.ph*scale}px`;
+  const page=document.createElement("div");
+  page.className="preview-page";
+  page.style.width=`${s.pw*scale}px`;
+  page.style.height=`${s.ph*scale}px`;
 
-    const img=document.createElement("img");
-    img.src=item.url;
-    img.alt=`Page ${index+1}`;
-    const availableW=s.pw-s.marginMm*2;
-    const availableH=s.ph-s.marginMm*2;
-    const fit=Math.min(availableW/s.iw,availableH/s.ih);
-    const iw=s.iw*fit*scale;
-    const ih=s.ih*fit*scale;
-    img.style.width=`${iw}px`;
-    img.style.height=`${ih}px`;
-    img.style.left=`${(s.pw*scale-iw)/2}px`;
-    img.style.top=`${(s.ph*scale-ih)/2}px`;
-    img.style.transform=`rotate(${item.rotation||0}deg)`;
-    page.appendChild(img);
+  const img=document.createElement("img");
+  img.src=item.url;
+  img.alt=`Page ${selectedPdfPage+1}`;
+  const availableW=Math.max(1,s.pw-s.marginMm*2);
+  const availableH=Math.max(1,s.ph-s.marginMm*2);
+  const fit=Math.min(availableW/s.iw,availableH/s.ih);
+  const iw=s.iw*fit*scale, ih=s.ih*fit*scale;
 
-    const badge=document.createElement("span");
-    badge.textContent=`${index+1}`;
-    badge.style.cssText="position:absolute;left:8px;top:8px;z-index:2;width:24px;height:24px;border-radius:50%;background:rgba(17,24,39,.75);color:#fff;font:700 11px system-ui;display:grid;place-items:center;";
-    page.appendChild(badge);
-    stage.appendChild(page);
+  img.style.width=`${iw}px`;
+  img.style.height=`${ih}px`;
+  img.style.left=`${(s.pw*scale-iw)/2}px`;
+  img.style.top=`${(s.ph*scale-ih)/2}px`;
+  img.style.transform=`rotate(${item.rotation||0}deg)`;
+  page.appendChild(img);
+
+  const badge=document.createElement("span");
+  badge.textContent=`Page ${selectedPdfPage+1}`;
+  badge.style.cssText="position:absolute;left:10px;top:10px;z-index:2;padding:5px 9px;border-radius:999px;background:rgba(17,24,39,.78);color:#fff;font:700 11px system-ui;letter-spacing:.01em;";
+  page.appendChild(badge);
+  stage.appendChild(page);
+
+  if(title) title.textContent=`Page ${selectedPdfPage+1} of ${total}`;
+
+  document.querySelectorAll(".image-row").forEach((row,i)=>{
+    row.classList.toggle("preview-selected",i===selectedPdfPage);
   });
 }
 
@@ -355,20 +371,18 @@ async function createImagePdf(){
   status.textContent="Creating PDF locally…";
 
   try{
-    const pageSize=document.getElementById("pageSize").value;
-    const orientation=document.getElementById("orientation").value;
-    const marginMm=Number(document.getElementById("margin").value)||0;
-
     const pages=[];
     for(const item of pdfImages){
       const info=await kwikImageToJpeg(item);
       const iw=info.imgWidth, ih=info.imgHeight;
+      const pageSize=item.pageSize || document.getElementById("pageSize").value;
+      const orientation=item.orientation || document.getElementById("orientation").value;
+      const marginMm=Number(item.margin ?? document.getElementById("margin").value)||0;
 
       let pw,ph;
       if(pageSize==="letter"){
         pw=215.9; ph=279.4;
       }else if(pageSize==="image"){
-        // Image-size mode: use the image's physical size at 96 CSS DPI.
         pw=iw*25.4/96 + marginMm*2;
         ph=ih*25.4/96 + marginMm*2;
         pw=Math.max(25,pw); ph=Math.max(25,ph);
@@ -376,11 +390,9 @@ async function createImagePdf(){
         pw=210; ph=297;
       }
 
-      const landscape = orientation==="landscape" ||
-        (orientation==="auto" && ((iw>ih && pageSize!=="image") || (pageSize==="image" && pw>ph)));
-      if(pageSize!=="image"){
-        if(landscape){ const t=pw; pw=ph; ph=t; }
-      }
+      if(orientation==="landscape" && ph>pw){ const t=pw; pw=ph; ph=t; }
+      if(orientation==="portrait" && pw>ph){ const t=pw; pw=ph; ph=t; }
+      if(orientation==="auto" && pageSize!=="image" && iw>ih){ const t=pw; pw=ph; ph=t; }
 
       const maxW=Math.max(1,pw-marginMm*2);
       const maxH=Math.max(1,ph-marginMm*2);
@@ -472,4 +484,79 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
   const stage=document.getElementById("pdfPreviewStage");
   if(stage) new ResizeObserver(()=>updatePdfPreview()).observe(stage);
+});
+
+document.getElementById("imageList").addEventListener("click",(e)=>{
+  const row=e.target.closest(".image-row");
+  if(!row)return;
+  const index=Number(row.dataset.index);
+  const action=e.target.closest("[data-action]")?.dataset.action;
+
+  if(!action){
+    selectedPdfPage=index;
+    updatePdfPreview();
+    return;
+  }
+
+  if(action==="up" && index>0){
+    [pdfImages[index-1],pdfImages[index]]=[pdfImages[index],pdfImages[index-1]];
+    selectedPdfPage=index-1;
+  }
+  if(action==="down" && index<pdfImages.length-1){
+    [pdfImages[index+1],pdfImages[index]]=[pdfImages[index],pdfImages[index+1]];
+    selectedPdfPage=index+1;
+  }
+  if(action==="rotate"){
+    pdfImages[index].rotation=(pdfImages[index].rotation+90)%360;
+    selectedPdfPage=index;
+  }
+  if(action==="remove"){
+    try{URL.revokeObjectURL(pdfImages[index].url)}catch(e){}
+    pdfImages.splice(index,1);
+    if(selectedPdfPage>=pdfImages.length) selectedPdfPage=Math.max(0,pdfImages.length-1);
+  }
+  renderPdfImages();
+  updatePdfPreview();
+});
+
+document.getElementById("imageList").addEventListener("change",(e)=>{
+  const select=e.target.closest("select[data-setting]");
+  if(!select)return;
+  const row=select.closest(".image-row");
+  const index=Number(row.dataset.index);
+  const setting=select.dataset.setting;
+  pdfImages[index][setting]=setting==="margin"?Number(select.value):select.value;
+  selectedPdfPage=index;
+  updatePdfPreview();
+});
+
+document.addEventListener("DOMContentLoaded",()=>{
+  ["pageSize","orientation","margin"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.addEventListener("input",updatePdfPreview);
+      el.addEventListener("change",updatePdfPreview);
+    }
+  });
+  const stage=document.getElementById("pdfPreviewStage");
+  if(stage && window.ResizeObserver){
+    new ResizeObserver(()=>updatePdfPreview()).observe(stage);
+  }
+});
+
+document.getElementById("applyAllSettings").addEventListener("click",()=>{
+  const size=document.getElementById("pageSize").value;
+  const orientation=document.getElementById("orientation").value;
+  const margin=Number(document.getElementById("margin").value)||0;
+  pdfImages.forEach(item=>{
+    item.pageSize=size;
+    item.orientation=orientation;
+    item.margin=margin;
+  });
+  renderPdfImages();
+  updatePdfPreview();
+  const status=document.getElementById("pdfStatus");
+  if(status) status.textContent=pdfImages.length
+    ? "✓ Settings applied to all pages."
+    : "Add images to get started.";
 });

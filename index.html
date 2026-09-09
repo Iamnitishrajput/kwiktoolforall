@@ -183,44 +183,54 @@
     </div>
 
     <div class="workspace-options">
-      <label>Page size
+      <label>Default page size
         <select id="pageSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select>
       </label>
-      <label>Orientation
+      <label>Default orientation
         <select id="orientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
       </label>
-      <label>Margin
+      <label>Default margin
         <select id="margin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select>
       </label>
+    </div>
+    <div class="apply-all-bar">
+      <div>
+        <strong>Apply settings to all pages</strong>
+        <span>Use the defaults above for every page.</span>
+      </div>
+      <button type="button" id="applyAllSettings" class="apply-all-btn">Apply to all</button>
     </div>
 
     <div class="file-toolbar">
       <strong id="fileCount">0 images</strong>
       <button type="button" id="clearImages" class="text-btn">Clear all</button>
     </div>
-    <div class="pdf-live-area">
+    <div class="pdf-pages-section">
+      <div class="image-list-wrap">
+        <div class="image-list-head">
+          <div>
+            <span class="preview-kicker">DOCUMENT PAGES</span>
+            <strong>Pages</strong>
+          </div>
+          <span id="previewPageCount">0 pages</span>
+        </div>
+        <div class="image-list" id="imageList"></div>
+      </div>
+
       <div class="pdf-preview-panel">
         <div class="preview-head">
           <div>
             <span class="preview-kicker">LIVE PREVIEW</span>
-            <strong id="previewTitle">PDF preview</strong>
+            <strong id="previewTitle">Selected page</strong>
           </div>
-          <span id="previewPageCount">0 pages</span>
+          <span>Updates instantly</span>
         </div>
         <div class="pdf-preview-stage" id="pdfPreviewStage">
           <div class="preview-empty" id="previewEmpty">
             <span>PDF</span>
-            <p>Your PDF preview will appear here</p>
+            <p>Add an image to see the live PDF preview</p>
           </div>
         </div>
-      </div>
-
-      <div class="image-list-wrap">
-        <div class="image-list-head">
-          <strong>Pages</strong>
-          <span>Drag controls to arrange</span>
-        </div>
-        <div class="image-list" id="imageList"></div>
       </div>
     </div>
 

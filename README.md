@@ -37,3 +37,11 @@ PDF generation now uses a local browser-side PDF engine. The tool no longer depe
 
 ## Image → PDF v4 Combined
 Adds live PDF preview. Page size, orientation, margin, image order, and rotation are reflected in the preview before download. The final PDF uses the same settings and remains browser-local.
+
+
+## Image → PDF v5 Fixed
+Fixed clear-all preview state, page selection, live orientation/page-size/margin preview, page controls, and multi-image layout. Pages are displayed in a horizontal scroll strip above a single live preview to prevent overlap.
+
+
+## Image → PDF v6 Per-page controls
+Each page now stores its own page size, orientation, and margin. The Pages strip includes per-page controls, live preview updates immediately, and Apply to all provides a quick bulk setting option.
