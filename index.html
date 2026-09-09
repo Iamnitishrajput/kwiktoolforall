@@ -215,6 +215,38 @@
       <button type="button" id="createPdf" class="create-pdf" disabled>Create PDF <span>→</span></button>
     </div>
 
+
+    <div class="scanner-workspace" id="scannerWorkspace" hidden>
+      <div class="scanner-head">
+        <div><span class="workspace-kicker scanner-kicker">DOCUMENT SCANNER</span><h2>Scan, clean & export</h2><p>Scan from camera or import document images. Everything is processed locally in your browser.</p></div>
+        <span class="local-pill">● Local processing</span>
+      </div>
+      <div class="scanner-upload" id="scannerUpload">
+        <div class="scanner-upload-actions">
+          <label class="scanner-button primary"><span>▣</span> Camera<input id="scannerCamera" type="file" accept="image/*" capture="environment" hidden></label>
+          <label class="scanner-button"><span>＋</span> Choose images<input id="scannerFiles" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden></label>
+        </div>
+        <label class="auto-scan-toggle"><input id="autoScan" type="checkbox" checked><span>Auto scan document</span><small>Automatically detect the document area when possible</small></label>
+        <p>Tip: place the document on a contrasting, well-lit surface for best edge detection.</p>
+      </div>
+      <div class="scanner-layout">
+        <div class="scanner-canvas-panel">
+          <div class="scanner-panel-head"><strong id="scannerPageTitle">No page selected</strong><span id="scannerPageCount">0 pages</span></div>
+          <div class="scanner-stage" id="scannerStage"><div class="scanner-empty">Choose a document image or camera photo to begin.</div></div>
+          <div class="scanner-page-actions"><button type="button" id="scannerPrev">← Previous</button><button type="button" id="scannerNext">Next →</button><button type="button" id="scannerAddPage">＋ Add page</button></div>
+        </div>
+        <aside class="scanner-controls">
+          <div class="scanner-control-group"><strong>Document colour</strong><div class="chip-grid" id="scannerFilters"><button type="button" data-filter="original" class="active">Original</button><button type="button" data-filter="color">Magic Color</button><button type="button" data-filter="gray">Grayscale</button><button type="button" data-filter="bw">B&W</button><button type="button" data-filter="blueprint">Blue</button></div></div>
+          <div class="scanner-control-group"><strong>Crop & straighten</strong><div class="scanner-two"><button type="button" id="scannerAutoCrop">✦ Auto crop</button><button type="button" id="scannerManualCrop">Crop</button></div><label class="range-label">Crop scale <input id="scannerCropScale" type="range" min="70" max="100" value="100"></label><div class="scanner-two"><button type="button" id="scannerRotateLeft">↺ Rotate</button><button type="button" id="scannerRotateRight">↻ Rotate</button></div></div>
+          <div class="scanner-control-group"><strong>Page size</strong><select id="scannerPageSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="id">ID Card</option><option value="original">Original</option></select><label class="range-label">Brightness <input id="scannerBrightness" type="range" min="70" max="140" value="100"></label><label class="range-label">Contrast <input id="scannerContrast" type="range" min="70" max="150" value="100"></label></div>
+          <div class="scanner-control-group"><strong>Export</strong><div class="export-grid"><button type="button" data-export="pdf">PDF</button><button type="button" data-export="jpg">JPG</button><button type="button" data-export="png">PNG</button><button type="button" data-export="word">WORD</button></div><button type="button" id="scannerShare" class="share-all">↥ Share / Send</button></div>
+          <p class="scanner-privacy">Local processing: your source images stay in this browser. No cloud upload is required for scanning or export.</p>
+        </aside>
+      </div>
+      <div class="scanner-bottom"><button type="button" id="scannerClear" class="text-btn">Clear scanner</button><span id="scannerStatus">Ready for a document.</span><button type="button" id="scannerDone" class="primary-action">Done</button></div>
+      <div class="scanner-share-panel" id="scannerSharePanel" hidden><div class="share-panel-head"><strong>Send scanned document</strong><button type="button" id="scannerShareClose">×</button></div><p>Choose a destination. If the browser supports file sharing, the scanned file can be shared directly. Otherwise the file will be downloaded so you can attach it in the app.</p><div class="share-grid"><button data-share="system">📤 Device / Apps</button><button data-share="whatsapp">WhatsApp</button><button data-share="telegram">Telegram</button><button data-share="email">Email</button><button data-share="sms">Messages / SMS</button><button data-share="twitter">X / Twitter</button><button data-share="linkedin">LinkedIn</button><button data-share="copy">Copy file name</button></div></div>
+    </div>
+
     <div class="pdf-success" id="pdfSuccess" hidden>
       <div class="success-orbit">
         <div class="success-check">✓</div>
