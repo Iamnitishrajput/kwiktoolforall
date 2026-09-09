@@ -3,142 +3,170 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="KwikToolForAll — fast, simple and privacy-first tools for everyday work.">
-  <title>KwikToolForAll — Everyday Work Tools</title>
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="KwikToolForAll — a fast, privacy-first toolbox for everyday documents, PDFs and images.">
+  <title>KwikToolForAll — Your everyday file toolbox</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="nav">
-    <a class="brand" href="#">
-      <span class="brand-icon">K</span>
-      <span>
-        <b>KwikToolForAll</b>
-        <small>Everyday work tools</small>
+  <div class="page-glow glow-one"></div>
+  <div class="page-glow glow-two"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="KwikToolForAll home">
+      <span class="brand-mark">K</span>
+      <span class="brand-copy">
+        <strong>KwikToolForAll</strong>
+        <small>Everyday file tools</small>
       </span>
     </a>
-    <nav class="nav-links">
+
+    <nav class="desktop-nav" aria-label="Main navigation">
       <a href="#tools">Tools</a>
-      <a href="#how">How it works</a>
+      <a href="#how-it-works">How it works</a>
       <a href="#privacy">Privacy</a>
     </nav>
-    <a class="nav-cta" href="#tools">Explore tools</a>
+
+    <a class="header-cta" href="#tools">Explore tools <span>↗</span></a>
+
+    <button class="mobile-menu" id="mobileMenu" aria-label="Open menu" aria-expanded="false">☰</button>
   </header>
 
   <main>
     <section class="hero">
-      <div class="hero-copy">
-        <div class="eyebrow">WORK TOOLS, WITHOUT THE WORKAROUND</div>
-        <h1>Get it done.<br><span>Then move on.</span></h1>
-        <p>Scan, convert, extract, compress and share everyday files from one simple workspace.</p>
+      <div class="hero-content">
+        <div class="eyebrow"><span class="pulse-dot"></span> WORK SMARTER. KEEP MOVING.</div>
+        <h1>Your everyday<br><span>file toolbox.</span></h1>
+        <p class="hero-text">
+          Scan, convert, extract, compress and share files in a workspace built to feel simple.
+        </p>
 
-        <div class="search-wrap">
-          <span>⌕</span>
-          <input id="toolSearch" type="search" placeholder="What do you need to do?" aria-label="Search tools">
+        <div class="search-shell" id="searchShell">
+          <span class="search-icon">⌕</span>
+          <input id="toolSearch" type="search" autocomplete="off"
+                 placeholder="What do you need to do?  Try “image to PDF”">
           <kbd>/</kbd>
         </div>
 
-        <div class="trust-row">
-          <span>✓ No installation</span>
-          <span>✓ Browser processing where possible</span>
-          <span>✓ Privacy-first</span>
+        <div class="quick-actions" aria-label="Tool categories">
+          <button class="chip active" data-filter="all">All tools</button>
+          <button class="chip" data-filter="documents">Documents</button>
+          <button class="chip" data-filter="pdf">PDF</button>
+          <button class="chip" data-filter="images">Images</button>
+          <button class="chip" data-filter="sharing">Sharing</button>
         </div>
       </div>
 
-      <div class="hero-panel">
-        <div class="panel-top">
-          <span>QUICK START</span>
-          <span class="live-dot">● Ready</span>
-        </div>
-        <div class="quick-tool">
-          <div class="quick-icon">📄</div>
-          <div>
-            <strong>Image → PDF</strong>
-            <p>Turn JPG or PNG files into a PDF directly in your browser.</p>
+      <div class="hero-visual" aria-label="KwikToolForAll tool preview">
+        <div class="orbit orbit-a"></div>
+        <div class="orbit orbit-b"></div>
+        <div class="preview-window">
+          <div class="preview-top">
+            <span class="window-dots"><i></i><i></i><i></i></span>
+            <span class="preview-title">KwikTool workspace</span>
+            <span class="ready-pill"><b></b> Ready</span>
           </div>
-          <button id="quickOpen">Open →</button>
+          <div class="preview-body">
+            <div class="preview-heading">What would you like to do?</div>
+            <div class="preview-search">⌕ <span>Convert image to PDF</span></div>
+            <div class="preview-tool-row">
+              <div class="mini-tool selected">
+                <span class="mini-icon">▧</span>
+                <strong>Image → PDF</strong>
+                <small>Local processing</small>
+              </div>
+              <div class="mini-tool">
+                <span class="mini-icon">✦</span>
+                <strong>Image → Text</strong>
+                <small>OCR extraction</small>
+              </div>
+            </div>
+            <div class="privacy-strip"><span>⌾</span><div><strong>Privacy-first</strong><small>Process locally whenever possible.</small></div><em>✓</em></div>
+          </div>
         </div>
-        <div class="privacy-line">
-          <span>🔒</span>
-          <div><b>Local processing</b><small>Your files don't need to be uploaded for this tool.</small></div>
-        </div>
+        <div class="floating-card card-left"><span>✓</span><div><strong>Fast workflow</strong><small>No installation</small></div></div>
+        <div class="floating-card card-right"><span>⌾</span><div><strong>Files stay local</strong><small>Where possible</small></div></div>
       </div>
     </section>
 
-    <section id="tools" class="tools-section">
-      <div class="section-title">
+    <section class="trust-row" aria-label="Product benefits">
+      <div><span>01</span><strong>Simple by design</strong><small>No clutter. No learning curve.</small></div>
+      <div><span>02</span><strong>Browser-first</strong><small>Local processing whenever possible.</small></div>
+      <div><span>03</span><strong>Privacy-minded</strong><small>Your files aren't kept unnecessarily.</small></div>
+    </section>
+
+    <section class="tools-section" id="tools">
+      <div class="section-heading">
         <div>
           <div class="eyebrow">THE TOOLBOX</div>
-          <h2>Choose a tool</h2>
+          <h2>Pick a task.<br><span>Get it done.</span></h2>
         </div>
-        <span id="toolCount">10 tools</span>
+        <p id="toolCount">10 tools · built for everyday work</p>
       </div>
 
-      <div class="tool-grid" id="toolGrid">
-        <button class="tool-card" data-tool="Document Scanner" data-keywords="scan camera document pdf">
-          <span class="card-icon">📷</span><strong>Document Scanner</strong><p>Scan and clean documents with your camera.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="Image → Text" data-keywords="ocr image text screenshot extract">
-          <span class="card-icon">🔤</span><strong>Image → Text</strong><p>Extract readable text from images and screenshots.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="JPG / PNG → PDF" data-keywords="jpg png pdf image convert">
-          <span class="card-icon">📄</span><strong>JPG / PNG → PDF</strong><p>Combine images into a clean PDF document.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="PDF → JPG / PNG" data-keywords="pdf jpg png convert image">
-          <span class="card-icon">📕</span><strong>PDF → JPG / PNG</strong><p>Turn PDF pages into image files.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="Merge PDF" data-keywords="pdf merge combine">
-          <span class="card-icon">📑</span><strong>Merge PDF</strong><p>Combine several PDF files into one document.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="Split PDF" data-keywords="pdf split pages extract">
-          <span class="card-icon">✂️</span><strong>Split PDF</strong><p>Separate pages or ranges from a PDF.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="Compress Image" data-keywords="image compress reduce size">
-          <span class="card-icon">🗜️</span><strong>Compress Image</strong><p>Reduce image size for email and sharing.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="Resize Image" data-keywords="image resize dimensions">
-          <span class="card-icon">↔️</span><strong>Resize Image</strong><p>Change image dimensions quickly.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="JPG ↔ PNG" data-keywords="jpg png image format convert">
-          <span class="card-icon">🖼️</span><strong>JPG ↔ PNG</strong><p>Switch between common image formats.</p><span class="card-link">Open tool →</span>
-        </button>
-        <button class="tool-card" data-tool="Share & Send" data-keywords="share send temporary file delete">
-          <span class="card-icon">📤</span><strong>Share & Send</strong><p>Share files with temporary processing and automatic cleanup.</p><span class="card-link">Coming next →</span>
-        </button>
+      <div class="featured-tool">
+        <div class="featured-icon">▧</div>
+        <div class="featured-copy">
+          <span class="label">START HERE</span>
+          <h3>Image → PDF</h3>
+          <p>Turn one or more JPG or PNG images into a clean PDF, directly in your browser.</p>
+        </div>
+        <div class="featured-meta">
+          <span>LOCAL</span>
+          <button class="open-tool" data-tool="Image → PDF">Open tool <span>→</span></button>
+        </div>
+      </div>
+
+      <div class="tools-grid" id="toolsGrid"></div>
+      <div class="no-results" id="noResults">
+        <div>⌕</div>
+        <h3>No tool found</h3>
+        <p>Try “PDF”, “image”, “scan”, “text” or “share”.</p>
       </div>
     </section>
 
-    <section id="how" class="how">
-      <div class="eyebrow">SIMPLE BY DESIGN</div>
-      <h2>Do the task. Keep control.</h2>
+    <section class="how-section" id="how-it-works">
+      <div class="section-heading compact">
+        <div>
+          <div class="eyebrow">HOW IT WORKS</div>
+          <h2>Less clicking.<br><span>More doing.</span></h2>
+        </div>
+      </div>
+
       <div class="steps">
-        <div><span>01</span><strong>Choose a tool</strong><p>Pick the task you need from the toolbox.</p></div>
-        <div><span>02</span><strong>Process your file</strong><p>Where possible, the work happens directly in your browser.</p></div>
-        <div><span>03</span><strong>Download or share</strong><p>Get the result and finish the job without unnecessary storage.</p></div>
+        <article><span>01</span><div class="step-icon">⌕</div><h3>Choose your task</h3><p>Find what you need using the search or tool categories.</p></article>
+        <article><span>02</span><div class="step-icon">↥</div><h3>Add your files</h3><p>Drop files in or choose them from your device.</p></article>
+        <article><span>03</span><div class="step-icon">✦</div><h3>Finish the job</h3><p>Download or share your result and get back to work.</p></article>
       </div>
     </section>
 
-    <section id="privacy" class="privacy-section">
-      <div class="privacy-badge">🔒</div>
-      <div>
-        <div class="eyebrow">OUR CORE PRINCIPLE</div>
-        <h2>Your files don't stay with us.</h2>
-        <p>Tools that can work locally do so in your browser. For future sharing features that require temporary server processing, temporary data will be removed after successful delivery and backed by automatic expiry.</p>
+    <section class="privacy-section" id="privacy">
+      <div class="privacy-card">
+        <div class="privacy-symbol">⌾</div>
+        <div>
+          <div class="eyebrow">PRIVACY, BY DEFAULT</div>
+          <h2>Your files should work for you —<br><span>not live on our servers.</span></h2>
+          <p>KwikToolForAll is designed to process files in your browser whenever practical. For features that genuinely need temporary server processing, the goal is to remove temporary data as soon as the job is complete.</p>
+        </div>
+        <div class="privacy-badge"><b>✓</b> Browser-first</div>
       </div>
     </section>
   </main>
 
-  <footer>
-    <div><b>KwikToolForAll</b><span>Everyday work tools, made simple.</span></div>
-    <span>© 2026 KwikToolForAll</span>
+  <footer class="site-footer">
+    <div class="footer-brand"><span class="brand-mark">K</span><div><strong>KwikToolForAll</strong><small>Useful tools. Less hassle.</small></div></div>
+    <p>Built for everyday work.</p>
   </footer>
 
-  <div class="modal hidden" id="modal">
-    <div class="modal-box">
-      <button class="modal-close" id="modalClose">×</button>
-      <div class="modal-icon">✓</div>
-      <h2 id="modalTitle">Tool selected</h2>
-      <p id="modalText">This tool will be connected to its working module as we build the platform.</p>
-      <button class="modal-btn" id="modalAction">Got it</button>
+  <div class="modal-backdrop" id="toolModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+      <div class="modal-icon">✦</div>
+      <div class="eyebrow">TOOL READY</div>
+      <h2 id="modalTitle">Image → PDF</h2>
+      <p id="modalText">The polished workspace is ready. The actual file-processing engine will be added in the next build.</p>
+      <div class="modal-note"><span>⌾</span> No files are uploaded by this preview.</div>
+      <button class="modal-primary" id="modalOkay">Got it</button>
     </div>
   </div>
 

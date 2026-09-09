@@ -1,24 +1,17 @@
-# KwikToolForAll
+# KwikToolForAll — WOW UI package
 
-A separate GitHub Pages project for practical corporate productivity utilities.
+This package is a visual redesign of the KwikToolForAll GitHub Pages homepage.
 
-## v2 foundation
-- Professional responsive homepage
-- Tool search
-- Document / conversion / image / sharing categories
-- Privacy-first messaging
-- Working UI interactions
-- No backend required for the current homepage
+## Files
+- `index.html` — page structure
+- `style.css` — complete responsive visual system
+- `script.js` — search, category filtering, tool cards, modal interactions
 
-## Next implementation stages
-1. JPG/PNG → PDF
-2. PDF → JPG/PNG
-3. JPG ↔ PNG
-4. Merge / Split PDF
-5. Image compression / resize
-6. OCR
-7. Camera document scanner
-8. Temporary sharing with verified deletion
+## Current stage
+This is the polished UI foundation. Tool buttons intentionally open a preview modal rather than pretending that file-processing engines are already implemented.
 
-## Privacy principle
-Use browser-side processing wherever practical. Do not claim that server-side data was deleted until a backend actually performs and confirms deletion.
+## Next build
+Connect the first real tool: JPG/PNG → PDF using browser-side processing where practical.
+
+## Deployment
+Replace the existing `index.html`, `style.css`, and `script.js` in the repository root and commit to `main`. GitHub Pages should rebuild automatically.
