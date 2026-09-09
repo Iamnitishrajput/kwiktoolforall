@@ -1,19 +1,23 @@
-# KwikToolForAll v4 — WOW UI
+# KwikToolForAll — Final UI Foundation
 
-This version is a visual redesign inspired by the supplied reference image:
-- Deep navy/blue/purple hero
-- Gradient accent typography
-- Visual file-conversion illustration
+This package is the final homepage/UI foundation before functional file-processing engines are connected.
+
+## Included
+- Responsive navy/blue/purple visual design
 - Search-first workflow
-- Popular tools with colourful icon treatments
-- Category cards
-- Benefits strip
-- Privacy-first section
-- Responsive layout
+- Popular tools and complete categorized toolbox
+- Working search and category navigation
+- Working dark mode with localStorage persistence
+- Working Home, Tools, How it works, Privacy and About navigation
+- Privacy section
+- Creator/About section
+- Mobile navigation
+- Keyboard `/` search shortcut
+- Accessible labels and focus-friendly controls
+- No external libraries required
 
-No external image assets or libraries are required.
-
-Tool buttons currently show a small status message. Actual file-processing engines are intentionally not faked; they will be connected in the next implementation stage.
+## Important
+The tool buttons intentionally do not claim to process files yet. They show a status message until the real browser-side processing engines are implemented.
 
 ## Deploy
-Replace `index.html`, `style.css`, and `script.js` in the GitHub repository root and commit to `main`.
+Replace `index.html`, `style.css`, and `script.js` in the repository root and commit to `main`.

@@ -1,97 +1,164 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="KwikToolForAll — simple, fast and privacy-first file tools.">
-  <title>KwikToolForAll — Simple tools. Real value.</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="KwikToolForAll — simple, useful file tools for everyday work.">
+<title>KwikToolForAll — Simple tools. Real value.</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="topbar">
-  <a href="#" class="brand"><span class="brand-mark">K</span><span><b>KwikToolForAll</b><small>Everyday file tools</small></span></a>
-  <nav><a class="nav-active" href="#">Home</a><a href="#tools">Tools</a><a href="#how">How it works</a><a href="#privacy">Privacy</a><a href="#about">About</a></nav>
+<header class="topbar" id="home">
+  <a class="brand" href="#home" aria-label="KwikToolForAll home">
+    <span class="brand-mark">K</span>
+    <span class="brand-copy"><b>KwikToolForAll</b><small>Everyday file tools</small></span>
+  </a>
+  <nav class="main-nav" aria-label="Main navigation">
+    <a href="#home" class="nav-link active">Home</a>
+    <a href="#tools" class="nav-link">Tools</a>
+    <a href="#how" class="nav-link">How it works</a>
+    <a href="#privacy" class="nav-link">Privacy</a>
+    <a href="#about" class="nav-link">About</a>
+  </nav>
   <div class="header-actions">
-    <button class="icon-btn" id="focusSearch" aria-label="Search">⌕</button>
-    <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">☾</button>
-    <a class="hero-btn" href="#tools">Explore tools <span>→</span></a>
+    <button class="circle-btn" id="searchFocus" aria-label="Focus search">⌕</button>
+    <button class="circle-btn" id="themeToggle" aria-label="Toggle dark mode" aria-pressed="false">☾</button>
+    <a class="explore-btn" href="#tools">Explore tools <span>→</span></a>
   </div>
+  <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
 </header>
 
 <main>
 <section class="hero">
   <div class="hero-copy">
-    <div class="hero-kicker"><i></i> SIMPLE. FAST. USEFUL.</div>
+    <div class="kicker"><i></i> SIMPLE. FAST. USEFUL.</div>
     <h1>Your files.<br><strong>Your workflow.</strong><br>One toolbox.</h1>
     <p>Convert, scan, extract, compress and share — without the hassle.</p>
-    <div class="search-wrap">
-      <span>⌕</span><input id="search" type="search" placeholder="What do you want to do? (e.g. image to PDF)">
-      <button id="searchBtn">Search <b>→</b></button>
-    </div>
-    <div class="popular"><b>Popular:</b>
-      <button data-search="image to pdf">Image to PDF</button>
-      <button data-search="merge pdf">Merge PDF</button>
-      <button data-search="compress pdf">Compress PDF</button>
-      <button data-search="image to text">Image to Text</button>
-      <button data-search="document scanner">Scan Document</button>
+    <form class="search-box" id="searchForm">
+      <span class="search-symbol">⌕</span>
+      <input id="toolSearch" type="search" placeholder="What do you want to do?  e.g. image to PDF" aria-label="Search tools">
+      <button type="submit">Search <b>→</b></button>
+    </form>
+    <div class="popular">
+      <b>Popular:</b>
+      <button type="button" data-query="image to pdf">Image to PDF</button>
+      <button type="button" data-query="merge pdf">Merge PDF</button>
+      <button type="button" data-query="compress">Compress</button>
+      <button type="button" data-query="image to text">Image to Text</button>
+      <button type="button" data-query="scanner">Scan Document</button>
     </div>
   </div>
-  <div class="hero-art">
-    <div class="blob blob-one"></div><div class="blob blob-two"></div>
-    <div class="note note-one">Simple.<br>Fast.<br>Secure.<span></span></div>
-    <div class="file-card image-file"><div class="fake-photo"><span>▲</span><span>△</span><span>●</span></div><small>JPG / PNG</small></div>
-    <div class="arrow-art">→</div>
-    <div class="file-card pdf-file"><div class="pdf-top">PDF</div><div class="paper-lines"></div></div>
-    <div class="secure-card"><div class="secure-icon">✓</div><div><b>Browser-first processing</b><small>Your files stay on your device whenever possible.</small></div></div>
-    <div class="note note-two">Tools<br>for real work<span></span></div>
+  <div class="hero-art" aria-hidden="true">
+    <div class="art-glow"></div>
+    <div class="scribble one">Simple.<br>Fast.<br>Secure.<span></span></div>
+    <div class="visual-file photo">
+      <div class="photo-art"><span>▲</span><span>●</span><span>△</span></div>
+      <b>JPG / PNG</b>
+    </div>
+    <div class="visual-arrow">→</div>
+    <div class="visual-file pdf"><strong>PDF</strong><div class="paper-lines"></div></div>
+    <div class="secure-float"><span>✓</span><div><b>Browser-first</b><small>Your files stay local whenever possible.</small></div></div>
+    <div class="scribble two">Tools<br>for real work<span></span></div>
   </div>
 </section>
 
-<section class="popular-section" id="tools">
-  <div class="section-title"><div><span class="fire">✦</span><div><h2>Popular tools</h2><p>The tools people use the most.</p></div></div><a href="#all-tools">View all tools →</a></div>
-  <div class="popular-grid" id="popularGrid"></div>
+<section class="tools-area" id="tools">
+  <div class="section-head">
+    <div><span class="section-icon fire">✦</span><div><h2>Popular tools</h2><p>The tools people use the most.</p></div></div>
+    <button class="view-all" id="clearSearch">View all tools →</button>
+  </div>
+  <div class="tool-grid" id="toolGrid"></div>
+  <div class="empty-state" id="emptyState" hidden>
+    <div>⌕</div><h3>No matching tool</h3><p>Try “PDF”, “image”, “text”, “scan” or “share”.</p>
+    <button id="resetSearch">Show all tools</button>
+  </div>
 </section>
 
-<section class="category-section" id="all-tools">
-  <div class="section-title"><div><span class="grid-symbol">▦</span><div><h2>All tools by category</h2><p>Browse tools by what you want to do.</p></div></div><span class="tool-total">10 tools</span></div>
+<section class="category-area" id="categories">
+  <div class="section-head">
+    <div><span class="section-icon grid-icon">▦</span><div><h2>All tools by category</h2><p>Browse tools by what you want to do.</p></div></div>
+    <span class="tool-count" id="toolCount">10 tools</span>
+  </div>
   <div class="category-grid">
-    <article class="category blue"><header><span class="cat-icon">▤</span><div><h3>Documents</h3><small>2 tools</small></div></header>
-      <button data-search="document scanner">Document Scanner <b>›</b></button><button data-search="image to text">Image → Text <b>›</b></button>
+    <article class="category-card documents">
+      <header><span class="category-icon">▤</span><div><h3>Documents</h3><small>2 tools</small></div></header>
+      <button data-query="document scanner">Document Scanner <b>›</b></button>
+      <button data-query="image to text">Image → Text <b>›</b></button>
     </article>
-    <article class="category pink"><header><span class="cat-icon">▥</span><div><h3>PDF Tools</h3><small>4 tools</small></div></header>
-      <button data-search="image to pdf">Image → PDF <b>›</b></button><button data-search="pdf jpg png">PDF → JPG / PNG <b>›</b></button>
-      <button data-search="merge pdf">Merge PDF <b>›</b></button><button data-search="split pdf">Split PDF <b>›</b></button>
+    <article class="category-card pdf-tools">
+      <header><span class="category-icon">▥</span><div><h3>PDF Tools</h3><small>4 tools</small></div></header>
+      <button data-query="image to pdf">Image → PDF <b>›</b></button>
+      <button data-query="pdf jpg png">PDF → JPG / PNG <b>›</b></button>
+      <button data-query="merge pdf">Merge PDF <b>›</b></button>
+      <button data-query="split pdf">Split PDF <b>›</b></button>
     </article>
-    <article class="category green"><header><span class="cat-icon">▧</span><div><h3>Image Tools</h3><small>2 tools</small></div></header>
-      <button data-search="compress image">Compress Image <b>›</b></button><button data-search="jpg png">JPG ↔ PNG <b>›</b></button>
+    <article class="category-card images">
+      <header><span class="category-icon">▧</span><div><h3>Image Tools</h3><small>2 tools</small></div></header>
+      <button data-query="compress image">Compress Image <b>›</b></button>
+      <button data-query="jpg png">JPG ↔ PNG <b>›</b></button>
     </article>
-    <article class="category purple"><header><span class="cat-icon">⌯</span><div><h3>Sharing</h3><small>2 tools</small></div></header>
-      <button data-search="share send">Share & Send <b>›</b></button><button data-search="temporary link">Temporary Link <b>›</b></button>
+    <article class="category-card sharing">
+      <header><span class="category-icon">⌯</span><div><h3>Sharing</h3><small>2 tools</small></div></header>
+      <button data-query="share send">Share & Send <b>›</b></button>
+      <button data-query="temporary link">Temporary Link <b>›</b></button>
     </article>
   </div>
 </section>
 
 <section class="benefits">
-  <div><span class="benefit-icon blue-i">ϟ</span><div><b>No installation</b><small>Works directly in your browser.</small></div></div>
-  <div><span class="benefit-icon green-i">⌾</span><div><b>Privacy first</b><small>Your files don't leave your device for local tools.</small></div></div>
-  <div><span class="benefit-icon purple-i">✦</span><div><b>Fast & easy</b><small>Get things done in seconds.</small></div></div>
-  <div><span class="benefit-icon red-i">♡</span><div><b>Built for everyone</b><small>Simple, reliable and free to use.</small></div></div>
+  <div><span class="benefit blue">ϟ</span><div><b>No installation</b><small>Works directly in your browser.</small></div></div>
+  <div><span class="benefit green">⌾</span><div><b>Privacy first</b><small>Local tools can keep files on your device.</small></div></div>
+  <div><span class="benefit purple">✦</span><div><b>Fast & easy</b><small>Get small jobs done in seconds.</small></div></div>
+  <div><span class="benefit red">♡</span><div><b>Built for everyone</b><small>Simple, clear and free to use.</small></div></div>
   <div class="tagline">Get it done.<br><strong>Then move on.</strong> ✓</div>
 </section>
 
-<section class="how" id="how"><div class="center-heading"><span>HOW IT WORKS</span><h2>One simple flow.</h2><p>Pick a task, add your files and get your result.</p></div>
-  <div class="how-grid"><article><b>01</b><span>⌕</span><h3>Choose</h3><p>Find the tool that matches your task.</p></article>
-  <article><b>02</b><span>↥</span><h3>Add files</h3><p>Choose files from your device.</p></article>
-  <article><b>03</b><span>✦</span><h3>Finish</h3><p>Download or share the result.</p></article></div>
+<section class="how-section" id="how">
+  <div class="center-title"><span>HOW IT WORKS</span><h2>One simple flow.</h2><p>Choose a task, add your files and finish the job.</p></div>
+  <div class="steps">
+    <article><b>01</b><span>⌕</span><h3>Choose a task</h3><p>Find the right tool using search or categories.</p></article>
+    <article><b>02</b><span>↥</span><h3>Add your files</h3><p>Use files directly from your device.</p></article>
+    <article><b>03</b><span>✦</span><h3>Get your result</h3><p>Download or share when the job is complete.</p></article>
+  </div>
 </section>
 
-<section class="privacy" id="privacy"><div class="privacy-inner"><div class="shield">✓</div><div><span>PRIVACY FIRST</span><h2>Your files are yours.</h2><p>We design tools to process files in your browser whenever practical. Features that need temporary server processing will be built around short-lived data and cleanup.</p></div><strong>Browser-first<br><small>by design</small></strong></div></section>
-<section class="about" id="about"><span>ABOUT KWIKTOOLFORALL</span><h2>Simple tools.<br><strong>Real value.</strong></h2><p>A growing toolbox for everyday work — made to help you finish small file jobs without unnecessary friction.</p></section>
+<section class="privacy-section" id="privacy">
+  <div class="privacy-card">
+    <div class="privacy-icon">✓</div>
+    <div><span>PRIVACY FIRST</span><h2>Your files are yours.</h2>
+      <p>KwikToolForAll is designed around browser-first processing. When a feature can run locally, the file can stay on your device. Features that genuinely require temporary server processing will be designed with short-lived data and cleanup in mind.</p>
+    </div>
+    <div class="privacy-badge">🔒 Browser-first<br><small>where practical</small></div>
+  </div>
+</section>
+
+<section class="about-section" id="about">
+  <div class="about-grid">
+    <div class="about-label"><span>ABOUT THE CREATOR</span><div class="creator-mark">K</div></div>
+    <div class="about-copy">
+      <span>WHY KWIKTOOLFORALL?</span>
+      <h2>Built from a simple idea:<br><strong>work shouldn't feel harder than it is.</strong></h2>
+      <p>Hi, I'm <b>Nitish Kumar Singh</b>. I created KwikToolForAll to bring the small file utilities people repeatedly need into one clean, straightforward workspace.</p>
+      <p>Whether you're working with documents, PDFs, images or everyday office files, the goal is simple: fewer tabs, fewer confusing interfaces and less unnecessary uploading.</p>
+      <div class="creator-points"><span>01 <b>Useful first</b></span><span>02 <b>Privacy-minded</b></span><span>03 <b>Made to keep improving</b></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <span>THE TOOLBOX IS JUST GETTING STARTED</span>
+  <h2>Find a tool.<br><strong>Get the job done.</strong></h2>
+  <a href="#tools">Explore KwikToolForAll →</a>
+</section>
 </main>
 
-<footer><div class="footer-brand"><span class="brand-mark">K</span><div><b>KwikToolForAll</b><small>Everyday file tools</small></div></div><p>Made for productivity · Simple tools. Real value.</p></footer>
+<footer>
+  <div class="footer-brand"><span class="brand-mark">K</span><div><b>KwikToolForAll</b><small>Everyday file tools</small></div></div>
+  <div class="footer-links"><a href="#tools">Tools</a><a href="#privacy">Privacy</a><a href="#about">About</a></div>
+  <p>Simple tools. Real value.</p>
+</footer>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 <script src="script.js"></script>
 </body>
 </html>
