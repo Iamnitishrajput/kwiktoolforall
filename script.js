@@ -1,129 +1,14 @@
 const tools=[
 {id:'image-pdf',name:'Image → PDF',desc:'Convert JPG or PNG images into a clean PDF document.',icon:'▧',color:'red',keys:'image pdf convert'},
-{id:'ocr',name:'Image → Text',desc:'Extract readable text from images and screenshots.',icon:'Aa',color:'blue',keys:'image text ocr'},
-{id:'merge',name:'Merge PDF',desc:'Combine multiple PDF files into one document.',icon:'▤',color:'green',keys:'merge pdf'},
-{id:'split',name:'Split PDF',desc:'Separate pages or ranges from a PDF file.',icon:'✂',color:'orange',keys:'split pdf'},
-{id:'compress-pdf',name:'Compress PDF',desc:'Reduce PDF file size for easier sharing.',icon:'↘',color:'purple',keys:'compress pdf'},
-{id:'pdf-image',name:'PDF → JPG / PNG',desc:'Convert PDF pages into image files.',icon:'▥',color:'teal',keys:'pdf jpg png convert'},
-{id:'scanner',name:'Document Scanner',desc:'Scan and clean documents with your camera.',icon:'▤',color:'blue',keys:'document scanner scan'},
-{id:'compress-image',name:'Compress Image',desc:'Reduce image size for email and sharing.',icon:'⌁',color:'green',keys:'compress image'},
-{id:'jpg-png',name:'JPG ↔ PNG',desc:'Switch between common image formats.',icon:'⇄',color:'orange',keys:'jpg png image convert'},
-{id:'share',name:'Share & Send',desc:'Share files with temporary processing and delivery.',icon:'↥',color:'purple',keys:'share send temporary'}
+{id:'merge',name:'Merge PDF',desc:'Combine multiple PDF files into one document.',icon:'▤',color:'green',keys:'merge pdf combine'},
+{id:'split',name:'Split PDF',desc:'Extract selected pages or ranges into a new PDF.',icon:'✂',color:'orange',keys:'split pdf pages'},
+{id:'resize-image',name:'Resize Image',desc:'Change image dimensions while keeping quality under control.',icon:'↔',color:'blue',keys:'resize image dimensions'},
+{id:'compress-image',name:'Compress Image',desc:'Reduce image file size for email, upload and sharing.',icon:'⌁',color:'purple',keys:'compress image size'}
 ];
 const $=id=>document.getElementById(id), grid=$('toolGrid'), search=$('toolSearch'), empty=$('emptyState'), toast=$('toast');
 function showToast(msg){if(!toast)return;toast.textContent=msg;toast.classList.add('show');clearTimeout(window.__kwikToast);window.__kwikToast=setTimeout(()=>toast.classList.remove('show'),2600)}
 function render(q=''){const term=q.trim().toLowerCase();const list=tools.filter(t=>!term||`${t.name} ${t.desc} ${t.keys}`.toLowerCase().includes(term));grid.innerHTML=list.map(t=>`<article class="tool-card"><div class="tool-icon ${t.color}">${t.icon}</div><h3>${t.name}</h3><p>${t.desc}</p><button class="open-tool ${t.color}" data-open="${t.id}">Open tool →</button></article>`).join('');empty.hidden=list.length>0;grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openTool(b.dataset.open))}
-function openTool(id){const t=tools.find(x=>x.id===id);if(!t)return;if(id==='image-pdf'){openImagePdf();return}if(id==='scanner'){openScanner();return}$('tools').scrollIntoView({behavior:'smooth',block:'start'});showToast(`${t.name} is selected. This tool is next in the build queue.`)}
-
-const toolModal=$('toolModal'),imageFiles=$('imageFiles'),uploadZone=$('uploadZone'),imageList=$('imageList'),fileCount=$('fileCount'),createPdf=$('createPdf'),pdfStatus=$('pdfStatus'),clearImages=$('clearImages');
-const pdfSuccess=$('pdfSuccess'),workspaceHead=document.querySelector('.workspace-head'),upload=$('uploadZone'),fileToolbar=document.querySelector('.file-toolbar'),pagesSection=document.querySelector('.pdf-pages-section'),footer=$('pdfWorkspaceFooter');
-const selectAll=$('selectAllPages'),bulkSettings=$('bulkSettings'),selectedCount=$('selectedCount'),bulkSize=$('bulkSize'),bulkOrientation=$('bulkOrientation'),bulkMargin=$('bulkMargin'),applySelected=$('applySelected'),pageCount=$('previewPageCount'),reuse=$('reusePdfTool');
-let pdfImages=[],selected=new Set(),selectedPage=0,previewModal=null;
-function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function formatBytes(n){if(n<1024)return `${n} B`;if(n<1048576)return `${(n/1024).toFixed(1)} KB`;return `${(n/1048576).toFixed(1)} MB`}
-function resetSuccess(){pdfSuccess.hidden=true;pdfSuccess.classList.remove('is-visible');[workspaceHead,upload,fileToolbar,pagesSection,footer].forEach(x=>x&&x.classList.remove('tool-hidden'));clearImages.disabled=false;createPdf.disabled=pdfImages.length===0}
-function showSuccess(){[workspaceHead,upload,fileToolbar,pagesSection,footer].forEach(x=>x&&x.classList.add('tool-hidden'));pdfSuccess.hidden=false;requestAnimationFrame(()=>pdfSuccess.classList.add('is-visible'))}
-function clearWorkspace(){pdfImages.forEach(x=>URL.revokeObjectURL(x.url));pdfImages=[];selected.clear();selectedPage=0;if(imageFiles)imageFiles.value='';closePreview();renderPdfImages();pdfStatus.textContent='Add images to get started.'}
-function openImagePdf(){resetSuccess();toolModal.classList.add('open');toolModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';renderPdfImages();setTimeout(()=>imageFiles.focus(),80)}
-function closeImagePdf(){toolModal.classList.remove('open');toolModal.setAttribute('aria-hidden','true');document.body.style.overflow='';closePreview()}
-$('closeTool').onclick=closeImagePdf;document.querySelector('[data-close-tool]').onclick=closeImagePdf;
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(previewModal?.classList.contains('open'))closePreview();else if(toolModal.classList.contains('open'))closeImagePdf()}});
-imageFiles.addEventListener('change',e=>{addFiles([...e.target.files]);e.target.value='';});
-const chooseFiles=document.querySelector('.choose-files');
-if(chooseFiles) chooseFiles.addEventListener('click',e=>{e.stopPropagation();});
-uploadZone.addEventListener('click',e=>{if(e.target.closest('button,select,input,.choose-files'))return;imageFiles.click();});
-['dragenter','dragover'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add('dragover')}));
-['dragleave','drop'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.remove('dragover')}));
-uploadZone.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
-uploadZone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();imageFiles.click()}});
-clearImages.onclick=clearWorkspace;
-selectAll.onclick=()=>{if(!pdfImages.length)return;if(selected.size===pdfImages.length)selected.clear();else pdfImages.forEach((_,i)=>selected.add(i));renderPdfImages()};
-applySelected.onclick=()=>{const n=selected.size;if(!n)return;selected.forEach(i=>{pdfImages[i].pageSize=bulkSize.value;pdfImages[i].orientation=bulkOrientation.value;pdfImages[i].margin=Number(bulkMargin.value)});renderPdfImages();showToast(`Applied settings to ${n} selected page${n===1?'':'s'}.`)};
-reuse.onclick=()=>{clearWorkspace();resetSuccess();showToast('Workspace cleared. You can start again.')};
-function addFiles(files){const valid=files.filter(f=>/^(image\/jpeg|image\/png)$/i.test(f.type)||/\.(jpe?g|png)$/i.test(f.name));if(valid.length<files.length)showToast('Only JPG and PNG images are supported.');valid.forEach(file=>{const item={file,url:URL.createObjectURL(file),rotation:0,naturalWidth:0,naturalHeight:0,pageSize:'a4',orientation:'auto',margin:10};pdfImages.push(item);loadNaturalSize(item)});renderPdfImages()}
-function loadNaturalSize(item){const img=new Image();img.onload=()=>{item.naturalWidth=img.naturalWidth;item.naturalHeight=img.naturalHeight;renderPdfImages()};img.onerror=()=>{const i=pdfImages.indexOf(item);if(i>-1){URL.revokeObjectURL(item.url);pdfImages.splice(i,1);renderPdfImages()}showToast(`Could not read ${item.file.name}. Please choose a JPG or PNG image.`)};img.src=item.url}
-function getSpec(item){const iw=item.naturalWidth||1000,ih=item.naturalHeight||1400,mm=Number(item.margin)||0;let pw=210,ph=297;if(item.pageSize==='letter'){pw=215.9;ph=279.4}if(item.pageSize==='image'){pw=Math.max(25,iw*25.4/96+mm*2);ph=Math.max(25,ih*25.4/96+mm*2)}if(item.orientation==='landscape'&&ph>pw)[pw,ph]=[ph,pw];if(item.orientation==='portrait'&&pw>ph)[pw,ph]=[ph,pw];if(item.orientation==='auto'&&item.pageSize!=='image'&&iw>ih)[pw,ph]=[ph,pw];return{pw,ph,iw,ih,mm}}
-function renderPdfImages(){
-  if(!imageList)return;
-  fileCount.textContent=`${pdfImages.length} image${pdfImages.length===1?'':'s'}`;
-  createPdf.disabled=pdfImages.length===0;
-  pdfStatus.textContent=pdfImages.length?`${pdfImages.length} image${pdfImages.length===1?'':'s'} ready.`:'Add images to get started.';
-  pageCount.textContent=`${pdfImages.length} page${pdfImages.length===1?'':'s'}`;
-  selected=new Set([...selected].filter(i=>i>=0&&i<pdfImages.length));
-  selectedCount.textContent=`${selected.size} selected`;
-  bulkSettings.hidden=selected.size===0;
-  selectAll.textContent=pdfImages.length&&selected.size===pdfImages.length?'Clear all':'Select all';
-  if(!pdfImages.length){imageList.innerHTML='<div class="pages-empty">Add images above to build your document.</div>';return}
-
-  imageList.innerHTML=pdfImages.map((item,i)=>`<article class="image-row ${i===selectedPage?'preview-selected':''}" data-page-row="${i}">
-    <div class="page-card-main">
-      <label class="page-select">
-        <input class="page-check" type="checkbox" data-select="${i}" ${selected.has(i)?'checked':''}>
-        <span class="image-thumb" data-preview="${i}" title="Click to preview">
-          <img src="${item.url}" alt="Page ${i+1}">
-        </span>
-        <span class="image-meta">
-          <strong>Page ${i+1} · ${escapeHtml(item.file.name)}</strong>
-          <small>${formatBytes(item.file.size)} · ${item.pageSize==='image'?'Image size':item.pageSize.toUpperCase()} · ${item.orientation} · ${item.margin} mm margin</small>
-        </span>
-      </label>
-      <div class="image-actions">
-        <button type="button" class="preview-page-btn" data-preview="${i}" title="Live preview" aria-label="Preview page ${i+1}">◉</button>
-        <button type="button" data-action="up" data-i="${i}" ${i===0?'disabled':''}>↑</button>
-        <button type="button" data-action="down" data-i="${i}" ${i===pdfImages.length-1?'disabled':''}>↓</button>
-        <button type="button" data-action="rotate" data-i="${i}">↻</button>
-        <button type="button" data-action="remove" data-i="${i}">×</button>
-      </div>
-    </div>
-    <div class="page-settings">
-      <label>Size<select data-setting="pageSize" data-i="${i}"><option value="a4" ${item.pageSize==='a4'?'selected':''}>A4</option><option value="letter" ${item.pageSize==='letter'?'selected':''}>Letter</option><option value="image" ${item.pageSize==='image'?'selected':''}>Image</option></select></label>
-      <label>Orientation<select data-setting="orientation" data-i="${i}"><option value="auto" ${item.orientation==='auto'?'selected':''}>Auto</option><option value="portrait" ${item.orientation==='portrait'?'selected':''}>Portrait</option><option value="landscape" ${item.orientation==='landscape'?'selected':''}>Landscape</option></select></label>
-      <label>Margin<select data-setting="margin" data-i="${i}"><option value="10" ${item.margin===10?'selected':''}>10</option><option value="5" ${item.margin===5?'selected':''}>5</option><option value="0" ${item.margin===0?'selected':''}>0</option></select></label>
-    </div>
-  </article>`).join('');
-
-  imageList.querySelectorAll('.page-check').forEach(x=>x.addEventListener('change',e=>{
-    e.stopPropagation();
-    const i=Number(x.dataset.select);
-    x.checked?selected.add(i):selected.delete(i);
-    selectedPage=i;
-    renderPdfImages();
-  }));
-
-  imageList.querySelectorAll('[data-preview]').forEach(x=>x.addEventListener('click',e=>{
-    e.preventDefault();
-    e.stopPropagation();
-    const i=Number(x.dataset.preview);
-    if(pdfImages[i]){selectedPage=i;openPreview(i);}
-  }));
-
-  imageList.querySelectorAll('.image-meta').forEach(x=>x.addEventListener('click',e=>{
-    e.preventDefault();
-    e.stopPropagation();
-    const row=x.closest('[data-page-row]');
-    const i=Number(row.dataset.pageRow);
-    if(pdfImages[i]){selectedPage=i;openPreview(i);}
-  }));
-
-  imageList.querySelectorAll('.page-select').forEach(x=>x.addEventListener('click',e=>{
-    if(e.target.closest('.page-check')||e.target.closest('.image-thumb')||e.target.closest('.image-meta'))return;
-    const row=x.closest('[data-page-row]'),i=Number(row.dataset.pageRow);
-    if(pdfImages[i]){selectedPage=i;openPreview(i);}
-  }));
-
-  imageList.querySelectorAll('[data-setting]').forEach(x=>x.addEventListener('change',e=>{
-    e.stopPropagation();
-    const i=Number(x.dataset.i);
-    pdfImages[i][x.dataset.setting]=x.dataset.setting==='margin'?Number(x.value):x.value;
-    selectedPage=i;
-    renderPdfImages();
-  }));
-
-  imageList.querySelectorAll('[data-action]').forEach(x=>x.addEventListener('click',e=>{
-    e.stopPropagation();
-    pageAction(x.dataset.action,Number(x.dataset.i));
-  }));
-}
+function openTool(id){const t=tools.find(x=>x.id===id);if(!t)return;if(id==='image-pdf'){openImagePdf();return}if(['merge','split','resize-image','compress-image'].includes(id)){openUtility(id);return}showToast(`${t.name} is not available.`)}
 function pageAction(action,i){if(action==='remove'){URL.revokeObjectURL(pdfImages[i].url);pdfImages.splice(i,1);selected=new Set([...selected].filter(x=>x!==i).map(x=>x>i?x-1:x));selectedPage=Math.min(selectedPage,Math.max(0,pdfImages.length-1))}else if(action==='up'&&i>0){[pdfImages[i-1],pdfImages[i]]=[pdfImages[i],pdfImages[i-1]];remapSelection(i,i-1);selectedPage=i-1}else if(action==='down'&&i<pdfImages.length-1){[pdfImages[i+1],pdfImages[i]]=[pdfImages[i],pdfImages[i+1]];remapSelection(i,i+1);selectedPage=i+1}else if(action==='rotate'){pdfImages[i].rotation=(pdfImages[i].rotation+90)%360;selectedPage=i;if(previewModal?.classList.contains('open')){renderPreview()}}renderPdfImages()}
 function remapSelection(a,b){const n=new Set();selected.forEach(x=>n.add(x===a?b:x===b?a:x));selected=n}
 function makePreview(){if(previewModal)return;previewModal=document.createElement('div');previewModal.className='kwik-preview-modal';previewModal.innerHTML=`<div class="kwik-preview-backdrop"></div><section class="kwik-preview-card" role="dialog" aria-modal="true"><header><strong id="kwikPreviewTitle">Live preview</strong><button id="kwikPreviewClose" type="button">×</button></header><div class="kwik-preview-body"><div class="kwik-preview-stage" id="kwikPreviewStage"></div><aside><label>Page size<select id="pvSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select></label><label>Orientation<select id="pvOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label><label>Margin<select id="pvMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select></label><button id="pvRotate" type="button">↻ Rotate image</button><button id="pvDone" class="primary" type="button">Done</button><p>Changes are saved to this page immediately.</p></aside></div></section>`;document.body.appendChild(previewModal);$('kwikPreviewClose').onclick=closePreview;$('pvDone').onclick=closePreview;previewModal.querySelector('.kwik-preview-backdrop').onclick=closePreview;$('pvSize').onchange=()=>{pdfImages[selectedPage].pageSize=$('pvSize').value;renderPreview();renderPdfImages()};$('pvOrientation').onchange=()=>{pdfImages[selectedPage].orientation=$('pvOrientation').value;renderPreview();renderPdfImages()};$('pvMargin').onchange=()=>{pdfImages[selectedPage].margin=Number($('pvMargin').value);renderPreview();renderPdfImages()};$('pvRotate').onclick=()=>{pdfImages[selectedPage].rotation=(pdfImages[selectedPage].rotation+90)%360;renderPreview();renderPdfImages()}}
@@ -285,9 +170,46 @@ $('scannerShareClose').onclick=()=>{$('scannerSharePanel').hidden=true};
 $('reuseScannerTool').onclick=()=>{resetScannerSuccess();document.querySelectorAll('.scanner-upload,.scanner-layout,.scanner-bottom').forEach(x=>x.classList.remove('tool-hidden'));renderScanner()};
 async function shareScanner(){if(!scanPages.length){showToast('Upload a document first.');return}try{$('scannerSharePanel').hidden=true;$('scannerStatus').textContent=`Preparing ${scannerSelectedFormat.toUpperCase()}…`;const file=await buildScannerFile();const sharedFile=new File([file.blob],file.name,{type:file.type});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[sharedFile]}))){try{await navigator.share({title:`KwikToolForAll ${file.label}`,text:'Scanned document',files:[sharedFile]});resetScannerWorkspaceForSuccess();await showScannerSuccess('Your scanned file was shared successfully.');return}catch(e){if(e.name==='AbortError'){showToast('Share cancelled.');return}}}downloadScannerFile(file);resetScannerWorkspaceForSuccess();await showScannerSuccess('Your device cannot share files directly here, so the file was downloaded for sharing.')}catch(e){console.error(e);showToast('Could not prepare the file for sharing. Please try again.')}}
 document.querySelector('[data-share="system"]')?.addEventListener('click',shareScanner);
-const _baseOpenTool=openTool;openTool=function(id){if(id==='scanner'){openScanner();return}_baseOpenTool(id)};
-/* Popular shortcuts should open tools; they must not filter the All Tools grid. */
-const popularMap={'image to pdf':'image-pdf','merge pdf':'merge','compress':'compress-pdf','image to text':'ocr','scanner':'scanner'};
-document.querySelectorAll('[data-query]').forEach(b=>b.onclick=()=>{const id=popularMap[b.dataset.query]||popularMap[b.textContent.trim().toLowerCase()];if(id)openTool(id);else showToast('Tool is not available yet.')});
-if(typeof scannerWorkspace!=='undefined'){document.querySelector('[data-close-tool]')?.addEventListener('click',()=>{if(!scannerWorkspace.hidden)closeScanner()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&toolModal.classList.contains('open')&&!scannerWorkspace.hidden){closeScanner()}})}
 
+function showUtility(id){
+  const u={
+    merge:{k:'PDF TOOL',t:'Merge PDF',d:'Combine multiple PDF files into one PDF locally.'},
+    split:{k:'PDF TOOL',t:'Split PDF',d:'Extract selected pages or ranges into a new PDF locally.'},
+    'resize-image':{k:'IMAGE TOOL',t:'Resize Image',d:'Change image dimensions without uploading your file.'},
+    'compress-image':{k:'IMAGE TOOL',t:'Compress Image',d:'Reduce image size for faster sharing and uploads.'}
+  }[id];
+  $('utilityKicker').textContent=u.k;$('utilityTitle').textContent=u.t;$('utilityDesc').textContent=u.d;$('utilityBody').innerHTML='';$('utilityStatus').textContent='Ready.';$('utilityWorkspace').hidden=false;return u;
+}
+function openUtility(id){
+  if(!['merge','split','resize-image','compress-image'].includes(id))return;
+  closePreview?.();
+  openToolModal();
+  document.querySelectorAll('.workspace-head,.upload-zone,.file-toolbar,.pdf-pages-section,.workspace-footer,.pdf-success').forEach(x=>{if(x)x.classList.add('tool-hidden')});
+  $('scannerWorkspace').hidden=true;$('utilityWorkspace').hidden=false;showUtility(id);
+  const body=$('utilityBody');
+  if(id==='merge')renderMergeTool(body);
+  if(id==='split')renderSplitTool(body);
+  if(id==='resize-image')renderResizeTool(body);
+  if(id==='compress-image')renderCompressTool(body);
+}
+function openToolModal(){toolModal.classList.add('open');toolModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'}
+function closeUtility(){if($('utilityWorkspace'))$('utilityWorkspace').hidden=true;document.querySelectorAll('.workspace-head,.upload-zone,.file-toolbar,.pdf-pages-section,.workspace-footer').forEach(x=>x.classList.remove('tool-hidden'));closeImagePdf()}
+$('utilityClear').onclick=()=>{$('utilityBody').innerHTML='';$('utilityStatus').textContent='Ready.'};
+function utilityUploadMarkup(id,multiple){return `<div class="utility-upload"><div class="utility-upload-icon">↥</div><h3>${id==='merge'?'Choose PDF files':'Choose a PDF file'}</h3><p>${id==='merge'?'Select two or more PDFs in the order you want them combined.':'Then enter the pages or ranges you want to extract.'}</p><label class="choose-files">Choose files<input id="utilityFiles" type="file" accept="application/pdf" ${multiple?'multiple':''} hidden></label><div class="utility-file-list" id="utilityFileList"></div></div>`}
+function renderMergeTool(body){body.innerHTML=utilityUploadMarkup('merge',true)+`<div class="utility-actions"><button class="primary-action" id="mergeRun" disabled>Merge PDF →</button></div>`;const input=$('utilityFiles'),list=$('utilityFileList'),run=$('mergeRun');let files=[];input.onchange=()=>{files=[...input.files];list.innerHTML=files.map((f,i)=>`<div class="utility-file"><span>${i+1}</span><div><b>${escapeHtml(f.name)}</b><small>${formatBytes(f.size)}</small></div></div>`).join('');run.disabled=files.length<2;$('utilityStatus').textContent=files.length?`${files.length} PDFs selected.`:'Select at least 2 PDFs.'};run.onclick=async()=>{try{run.disabled=true;$('utilityStatus').textContent='Merging PDFs…';const out=await PDFLib.PDFDocument.create();for(const f of files){const src=await PDFLib.PDFDocument.load(await f.arrayBuffer());const pages=await out.copyPages(src,src.getPageIndices());pages.forEach(p=>out.addPage(p))}const bytes=await out.save();downloadBlob(new Blob([bytes],{type:'application/pdf'}),'KwikToolForAll_Merged.pdf');showUtilitySuccess('Merge complete. Your merged PDF is now downloaded.')}catch(e){console.error(e);showToast('Could not merge those PDFs.');$('utilityStatus').textContent='Merge failed.'}finally{run.disabled=false}}}
+function renderSplitTool(body){body.innerHTML=utilityUploadMarkup('split',false)+`<div class="utility-field"><label>Pages or ranges <input id="splitRange" type="text" placeholder="Example: 1, 3-5, 8"></label><small>Use commas for separate pages and hyphens for ranges.</small></div><div class="utility-actions"><button class="primary-action" id="splitRun" disabled>Split PDF →</button></div>`;let file=null;const input=$('utilityFiles'),run=$('splitRun');input.onchange=()=>{file=input.files[0]||null;$('utilityFileList').innerHTML=file?`<div class="utility-file"><span>1</span><div><b>${escapeHtml(file.name)}</b><small>${formatBytes(file.size)}</small></div></div>`:'';run.disabled=!file||!$('splitRange').value.trim();$('utilityStatus').textContent=file?'Enter pages or ranges.':'Choose a PDF.'};$('splitRange').oninput=()=>run.disabled=!file||!$('splitRange').value.trim();run.onclick=async()=>{try{run.disabled=true;$('utilityStatus').textContent='Splitting PDF…';const src=await PDFLib.PDFDocument.load(await file.arrayBuffer());const pages=parseRanges($('splitRange').value,src.getPageCount());if(!pages.length)throw new Error('No valid pages');const out=await PDFLib.PDFDocument.create();const copied=await out.copyPages(src,pages.map(n=>n-1));copied.forEach(p=>out.addPage(p));const bytes=await out.save();downloadBlob(new Blob([bytes],{type:'application/pdf'}),'KwikToolForAll_Split.pdf');showUtilitySuccess('Split complete. Your selected pages are now downloaded.')}catch(e){console.error(e);showToast('Please check the page numbers or PDF.');$('utilityStatus').textContent='Split failed.'}finally{run.disabled=false}}}
+function parseRanges(text,total){const set=new Set();for(const part of text.split(',')){const x=part.trim();if(!x)continue;if(/^\d+$/.test(x)){const n=Number(x);if(n>=1&&n<=total)set.add(n);continue}const m=x.match(/^(\d+)\s*-\s*(\d+)$/);if(m){let a=Number(m[1]),b=Number(m[2]);if(a>b)[a,b]=[b,a];for(let n=a;n<=b&&n<=total;n++)if(n>=1)set.add(n)}}return [...set].sort((a,b)=>a-b)}
+function imageToolMarkup(title,desc){return `<div class="image-tool-grid"><div class="utility-upload"><div class="utility-upload-icon">↥</div><h3>${title}</h3><p>${desc}</p><label class="choose-files">Choose image<input id="utilityImageFile" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><div id="utilityImageInfo" class="utility-file-list"></div></div><div class="utility-preview-panel"><div class="utility-preview-empty" id="utilityImagePreview">Preview will appear here.</div></div></div>`}
+function loadImageFile(file,cb){const url=URL.createObjectURL(file),img=new Image();img.onload=()=>cb(img,url);img.onerror=()=>{URL.revokeObjectURL(url);showToast('Could not read that image.')};img.src=url}
+function renderResizeTool(body){body.innerHTML=imageToolMarkup('Upload an image','JPG, PNG or WebP. Set the output dimensions below.')+`<div class="utility-options"><label>Width <input id="resizeW" type="number" min="1" placeholder="Width"></label><label>Height <input id="resizeH" type="number" min="1" placeholder="Height"></label><label class="check-line"><input id="resizeKeep" type="checkbox" checked> Keep aspect ratio</label><label>Format<select id="resizeFormat"><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option></select></label></div><div class="utility-actions"><button class="primary-action" id="resizeRun" disabled>Resize & Download →</button></div>`;let file=null,img=null,url=null;const input=$('utilityImageFile'),w=$('resizeW'),h=$('resizeH'),run=$('resizeRun'),prev=$('utilityImagePreview');input.onchange=()=>{file=input.files[0]||null;if(!file)return;loadImageFile(file,(im,u)=>{img=im;url=u;w.value=im.naturalWidth;h.value=im.naturalHeight;prev.innerHTML=`<img src="${u}" alt="Preview">`;run.disabled=false;$('utilityStatus').textContent=`Original: ${im.naturalWidth} × ${im.naturalHeight} · ${formatBytes(file.size)}`})};w.oninput=()=>{if(img&&$('resizeKeep').checked&&img.naturalWidth)h.value=Math.max(1,Math.round(Number(w.value)*img.naturalHeight/img.naturalWidth))};h.oninput=()=>{if(img&&$('resizeKeep').checked&&img.naturalHeight)w.value=Math.max(1,Math.round(Number(h.value)*img.naturalWidth/img.naturalHeight))};run.onclick=async()=>{const ow=Math.max(1,Number(w.value)),oh=Math.max(1,Number(h.value));const c=document.createElement('canvas');c.width=ow;c.height=oh;c.getContext('2d').drawImage(img,0,0,ow,oh);const type=$('resizeFormat').value;const blob=await canvasBlob(c,type,.92);downloadBlob(blob,`KwikToolForAll_Resized.${type==='image/png'?'png':'jpg'}`);showUtilitySuccess('Resize complete. Your resized image is now downloaded.')}}
+function renderCompressTool(body){body.innerHTML=imageToolMarkup('Upload an image','Lower quality to reduce file size. Your original stays on your device.')+`<div class="utility-options"><label>Quality <input id="compressQuality" type="range" min="25" max="95" value="72"><output id="compressQualityValue">72%</output></label><label>Max width <input id="compressMax" type="number" min="320" max="6000" value="2400"></label><label>Format<select id="compressFormat"><option value="image/jpeg">JPEG · best size</option><option value="image/png">PNG · lossless</option></select></label></div><div class="utility-actions"><button class="primary-action" id="compressRun" disabled>Compress & Download →</button></div>`;let file=null,img=null,url=null;const input=$('utilityImageFile'),q=$('compressQuality'),qv=$('compressQualityValue'),max=$('compressMax'),run=$('compressRun'),prev=$('utilityImagePreview');input.onchange=()=>{file=input.files[0]||null;if(!file)return;loadImageFile(file,(im,u)=>{img=im;url=u;prev.innerHTML=`<img src="${u}" alt="Preview">`;run.disabled=false;$('utilityStatus').textContent=`Original: ${formatBytes(file.size)} · ${im.naturalWidth} × ${im.naturalHeight}`})};q.oninput=()=>qv.value=`${q.value}%`;run.onclick=async()=>{const mw=Math.max(320,Number(max.value)||2400),scale=Math.min(1,mw/img.naturalWidth),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.drawImage(img,0,0,w,h);const type=$('compressFormat').value,blob=await canvasBlob(c,type,Number(q.value)/100);downloadBlob(blob,`KwikToolForAll_Compressed.${type==='image/png'?'png':'jpg'}`);$('utilityStatus').textContent=`Compressed: ${formatBytes(blob.size)} from ${formatBytes(file.size)}`;showUtilitySuccess('Compression complete. Your compressed image is now downloaded.')}}
+function canvasBlob(c,type,quality){return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('Could not encode image')),type,quality))}
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+function showUtilitySuccess(message){const body=$('utilityBody');body.innerHTML=`<div class="utility-success"><div class="success-orbit"><div class="success-check" aria-hidden="true"></div></div><span class="success-eyebrow">DOWNLOAD COMPLETE</span><h3>Thank you for using<br><strong>KwikToolForAll.</strong></h3><p class="success-main">${message}</p><p class="success-sub">Please check your <strong>Downloads</strong> folder.</p><div class="privacy-confirm"><span class="privacy-confirm-icon" aria-hidden="true"></span><div><strong>Your privacy is protected</strong><span>Your file was processed locally in your browser and was not uploaded.</span></div></div><button type="button" class="reuse-tool" id="utilityReuse"><span>↻</span> Re-use the tool</button><small class="success-note">No account • No cloud storage • No file retained</small></div>`;$('utilityReuse').onclick=()=>{const id=window.__utilityId;openUtility(id)}}
+const _oldOpenTool=openTool;window.__utilityId=null;openTool=function(id){window.__utilityId=id;return _oldOpenTool(id)};
+const originalOpenUtility=openUtility;openUtility=function(id){window.__utilityId=id;return originalOpenUtility(id)};
+const popularMap={'image to pdf':'image-pdf','merge pdf':'merge','split pdf':'split','resize image':'resize-image','compress image':'compress-image'};
+document.querySelectorAll('[data-query]').forEach(b=>b.onclick=()=>{const id=popularMap[b.dataset.query]||popularMap[b.textContent.trim().toLowerCase()];if(id)openTool(id)});
+// Make utility tools closable through the existing modal close button.
+const _closeImagePdf=closeImagePdf;window.__toolClose=_closeImagePdf;
+$('closeTool').onclick=()=>{if($('utilityWorkspace')&&!$('utilityWorkspace').hidden){closeUtility();return}if(typeof scannerWorkspace!=='undefined'&&!scannerWorkspace.hidden){closeScanner();return}_closeImagePdf()};document.querySelector('[data-close-tool]').onclick=()=>{if($('utilityWorkspace')&&!$('utilityWorkspace').hidden){closeUtility();return}if(typeof scannerWorkspace!=='undefined'&&!scannerWorkspace.hidden){closeScanner();return}_closeImagePdf()};

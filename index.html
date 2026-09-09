@@ -8,7 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=19">
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 </head>
 <body>
 <header class="topbar" id="home">
@@ -38,7 +39,7 @@
   <div class="hero-copy">
     <div class="kicker"><i></i> SIMPLE. FAST. USEFUL.</div>
     <h1>Your files.<br><strong>Your workflow.</strong><br>One toolbox.</h1>
-    <p>Convert, scan, extract, compress and share — without the hassle.</p>
+    <p>Convert, combine, split and optimize — without the hassle.</p>
     <form class="search-box" id="searchForm">
       <span class="search-symbol">⌕</span>
       <input id="toolSearch" type="search" placeholder="What do you want to do?  e.g. image to PDF" aria-label="Search tools">
@@ -47,9 +48,9 @@
     <div class="popular"><b>Popular:</b>
       <button type="button" data-query="image to pdf">Image to PDF</button>
       <button type="button" data-query="merge pdf">Merge PDF</button>
-      <button type="button" data-query="compress">Compress</button>
-      <button type="button" data-query="image to text">Image to Text</button>
-      <button type="button" data-query="scanner">Scan Document</button>
+      <button type="button" data-query="split pdf">Split PDF</button>
+      <button type="button" data-query="resize image">Resize Image</button>
+      <button type="button" data-query="compress image">Compress Image</button>
     </div>
   </div>
   <div class="hero-art" aria-hidden="true">
@@ -73,7 +74,7 @@
   </div>
   <div class="tool-grid" id="toolGrid"></div>
   <div class="empty-state" id="emptyState" hidden>
-    <div>⌕</div><h3>No matching tool</h3><p>Try “PDF”, “image”, “text”, “scan” or “share”.</p>
+    <div>⌕</div><h3>No matching tool</h3><p>Try “PDF”, “merge”, “split”, “resize” or “compress”.</p>
     <button id="resetSearch">Show all tools</button>
   </div>
 </section>
@@ -210,6 +211,15 @@
         <span>↻</span> Re-use the tool
       </button>
       <small class="success-note">No account • No cloud storage • No file retained</small>
+    </div>
+
+    <div class="utility-workspace" id="utilityWorkspace" hidden>
+      <div class="workspace-head utility-head">
+        <div><span class="workspace-kicker" id="utilityKicker">PDF TOOL</span><h2 id="utilityTitle">Utility</h2><p id="utilityDesc">Work locally in your browser.</p></div>
+        <span class="local-pill">● Local processing</span>
+      </div>
+      <div id="utilityBody"></div>
+      <div class="utility-footer"><span id="utilityStatus">Ready.</span><button type="button" class="text-btn" id="utilityClear">Clear</button></div>
     </div>
 
     <div class="scanner-workspace" id="scannerWorkspace" hidden>
