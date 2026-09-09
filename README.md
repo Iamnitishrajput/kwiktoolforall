@@ -45,3 +45,7 @@ Fixed clear-all preview state, page selection, live orientation/page-size/margin
 
 ## Image → PDF v6 Per-page controls
 Each page now stores its own page size, orientation, and margin. The Pages strip includes per-page controls, live preview updates immediately, and Apply to all provides a quick bulk setting option.
+
+
+## Image → PDF v7
+Redesigned the workspace around one Document Pages section. Pages can be multi-selected for bulk changes, each page retains independent size/orientation/margin, and a large live preview opens only when a page thumbnail is clicked. Preview controls update the selected page instantly. Clear All fully resets pages and preview state.
