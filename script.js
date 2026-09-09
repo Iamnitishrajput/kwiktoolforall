@@ -32,7 +32,6 @@ function openTool(id){
 const toolModal=document.getElementById("toolModal");
 const imageFiles=document.getElementById("imageFiles");
 const uploadZone=document.getElementById("uploadZone");
-const imageList=document.getElementById("imageList");
 const fileCount=document.getElementById("fileCount");
 const createPdf=document.getElementById("createPdf");
 const pdfStatus=document.getElementById("pdfStatus");
@@ -41,421 +40,63 @@ const pageSize=document.getElementById("pageSize");
 const orientation=document.getElementById("orientation");
 const margin=document.getElementById("margin");
 
-/* KwikToolForAll local PDF engine: no upload/server dependency. */
-function kwikMakePdf(pages){
-  const enc = new TextEncoder();
-  const chunks = [];
-  const offsets = [0];
-  let pos = 0;
-  const push = s => { const b = typeof s === "string" ? enc.encode(s) : s; chunks.push(b); pos += b.length; };
-
-  push("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
-  const objects = [];
-  const addObj = body => { objects.push(body); return objects.length; };
-
-  const catalogId = addObj(null);
-  const pagesId = addObj(null);
-  const pageIds = [];
-  const contentIds = [];
-  const imageIds = [];
-
-  pages.forEach((p) => {
-    const imgId = addObj(null);
-    imageIds.push(imgId);
-    const contentId = addObj(null);
-    contentIds.push(contentId);
-    const pageId = addObj(null);
-    pageIds.push(pageId);
-  });
-
-  objects[catalogId-1] = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
-  objects[pagesId-1] = `<< /Type /Pages /Kids [${pageIds.map(id=>id+" 0 R").join(" ")}] /Count ${pageIds.length} >>`;
-
-  pages.forEach((p,i)=>{
-    const w = p.width, h = p.height;
-    objects[imageIds[i]-1] = {
-      dict:`<< /Type /XObject /Subtype /Image /Width ${p.imgWidth} /Height ${p.imgHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.jpeg.length} >>`,
-      stream:p.jpeg
-    };
-    const commands = `q\n${w} 0 0 ${h} 0 0 cm\n/Im0 Do\nQ\n`;
-    const cb = enc.encode(commands);
-    objects[contentIds[i]-1] = {
-      dict:`<< /Length ${cb.length} >>`,
-      stream:cb
-    };
-    objects[pageIds[i]-1] = `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im0 ${imageIds[i]} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`;
-  });
-
-  objects.forEach((obj,i)=>{
-    offsets[i+1]=pos;
-    push(`${i+1} 0 obj\n`);
-    if(typeof obj === "string"){
-      push(obj+"\nendobj\n");
-    }else{
-      push(obj.dict+"\nstream\n");
-      push(obj.stream);
-      push("\nendstream\nendobj\n");
-    }
-  });
-  const xref = pos;
-  push(`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`);
-  for(let i=1;i<=objects.length;i++) push(String(offsets[i]).padStart(10,"0")+" 00000 n \n");
-  push(`trailer\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\nstartxref\n${xref}\n%%EOF`);
-  return new Blob(chunks,{type:"application/pdf"});
-}
-
-function kwikDataUrlToBytes(dataUrl){
-  const b64 = dataUrl.split(",")[1] || "";
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
-  return out;
-}
-
-function kwikImageToJpeg(item){
-  return new Promise((resolve,reject)=>{
-    const img = new Image();
-    img.onload=()=>{
-      try{
-        const rad=(item.rotation||0)*Math.PI/180;
-        const swap=Math.abs((item.rotation||0)%180)===90;
-        const cw=swap?img.height:img.width, ch=swap?img.width:img.height;
-        const canvas=document.createElement("canvas");
-        canvas.width=cw; canvas.height=ch;
-        const ctx=canvas.getContext("2d");
-        ctx.translate(cw/2,ch/2);
-        ctx.rotate(rad);
-        ctx.drawImage(img,-img.width/2,-img.height/2);
-        const data=canvas.toDataURL("image/jpeg",0.92);
-        resolve({jpeg:kwikDataUrlToBytes(data),imgWidth:cw,imgHeight:ch});
-      }catch(e){reject(e)}
-    };
-    img.onerror=()=>reject(new Error("Could not read image."));
-    img.src=item.url;
-  });
-}
-
 let pdfImages=[];
+let selectedSet=new Set();
+let selectedPage=0;
+let previewOpen=false;
 
-function openImagePdf(){
-  resetPdfSuccess();
-  updatePdfPreview();
+/* Only the Image → PDF workspace is implemented here. All processing is local. */
+const injectedStyle=document.createElement("style");
+injectedStyle.textContent=`
+.pdf-preview-panel{display:none!important}
+.kwik-pages-shell{margin-top:18px;border:1px solid var(--line,#dce5f0);border-radius:16px;background:#fff;overflow:hidden}
+.kwik-pages-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line,#dce5f0);gap:12px}
+.kwik-pages-head .kph-title{display:flex;align-items:center;gap:10px}.kwik-pages-head .kph-title span{font-size:10px;letter-spacing:1.8px;font-weight:900;color:#71809a}.kwik-pages-head .kph-title strong{font-size:15px}
+.kwik-pages-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.kwik-pages-actions button,.kwik-bulk button{border:1px solid #d6e0eb;background:#fff;color:#26364f;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:800}.kwik-pages-actions button:hover,.kwik-bulk button:hover{background:#f5f8fc}
+.kwik-bulk{display:none;padding:12px 14px;background:#f6f9fd;border-bottom:1px solid var(--line,#dce5f0);gap:8px;align-items:center;flex-wrap:wrap}.kwik-bulk.show{display:flex}.kwik-bulk strong{font-size:11px;margin-right:4px}.kwik-bulk select{height:34px;border:1px solid #d5dfeb;border-radius:8px;background:#fff;padding:0 9px;font-size:11px}.kwik-bulk .apply{background:#101a31;color:#fff;border-color:#101a31}
+.kwik-page-list{padding:10px;display:grid;gap:8px;max-height:340px;overflow:auto}.kwik-page-row{display:grid;grid-template-columns:22px 62px minmax(120px,1fr) auto;gap:11px;align-items:center;border:1px solid #e0e7f0;border-radius:12px;padding:8px;background:#fff;transition:.16s}.kwik-page-row:hover{border-color:#c5d3e3;box-shadow:0 5px 16px rgba(20,53,92,.06)}.kwik-page-row.active{border-color:#7b91ff;box-shadow:0 0 0 2px rgba(91,111,255,.10)}
+.kwik-page-check{width:16px;height:16px;accent-color:#5b6fff}.kwik-thumb{width:62px;height:76px;object-fit:contain;background:#f4f6f9;border:1px solid #e1e6ed;border-radius:7px;cursor:pointer;padding:2px}.kwik-page-meta{min-width:0}.kwik-page-meta strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kwik-page-meta small{display:block;color:#7a879a;font-size:9px;margin-top:2px}.kwik-page-settings{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.kwik-page-settings label{font-size:9px;color:#77859a;display:flex;align-items:center;gap:4px}.kwik-page-settings select{height:30px;border:1px solid #d8e1ec;border-radius:7px;background:#fff;padding:0 6px;font-size:10px}.kwik-icon-btn{width:30px;height:30px;padding:0!important;display:grid;place-items:center;border:1px solid #d8e1ec!important;border-radius:8px!important;background:#fff!important;font-size:14px!important}.kwik-icon-btn.danger{color:#d72d4d}
+.kwik-empty{padding:34px 18px;text-align:center;color:#7b899d}.kwik-empty strong{display:block;color:#33415a;font-size:12px;margin-bottom:4px}.kwik-empty span{font-size:10px}
+.kwik-preview-modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:24px}.kwik-preview-modal.open{display:flex}.kwik-preview-backdrop{position:absolute;inset:0;background:rgba(7,17,35,.72);backdrop-filter:blur(5px)}.kwik-preview-card{position:relative;z-index:2;width:min(940px,96vw);max-height:92vh;background:#fff;border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column}.kwik-preview-head{padding:15px 18px;border-bottom:1px solid #e1e7ef;display:flex;justify-content:space-between;align-items:center;gap:12px}.kwik-preview-head strong{font-size:14px}.kwik-preview-close{border:0;background:#f0f3f7;border-radius:9px;width:34px;height:34px;font-size:21px}.kwik-preview-body{display:grid;grid-template-columns:minmax(0,1fr) 220px;min-height:520px}.kwik-preview-stage{background:#eef2f6;display:grid;place-items:center;padding:24px;overflow:auto}.kwik-paper{position:relative;background:#fff;box-shadow:0 16px 35px rgba(20,35,60,.18);overflow:hidden;display:grid;place-items:center}.kwik-paper img{display:block;object-fit:contain;max-width:100%;max-height:100%}.kwik-preview-controls{border-left:1px solid #e1e7ef;padding:18px;display:flex;flex-direction:column;gap:12px}.kwik-preview-controls label{font-size:10px;font-weight:800;color:#65748b}.kwik-preview-controls select{display:block;width:100%;height:36px;margin-top:5px;border:1px solid #d7e0ea;border-radius:8px;padding:0 8px;font-size:11px;background:#fff}.kwik-preview-controls button{height:36px;border:1px solid #d7e0ea;border-radius:8px;background:#fff;font-size:11px;font-weight:800}.kwik-preview-controls .primary{background:#101a31;color:#fff;border-color:#101a31}.kwik-preview-hint{font-size:9px;color:#8490a2;line-height:1.45;margin-top:auto}
+.kwik-success{display:none;text-align:center;padding:42px 24px 48px}.kwik-success.show{display:block}.kwik-success-icon{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px;background:#e2f8ee;color:#0a9c62;font-size:28px;font-weight:900}.kwik-success h3{font-size:23px;margin:0 0 7px}.kwik-success p{font-size:12px;color:#687790;margin:0 auto 18px;max-width:470px}.kwik-success .privacy{font-size:10px;color:#16865b;background:#effaf5;border:1px solid #d8eee3;border-radius:11px;padding:11px 14px;display:inline-block;margin-bottom:18px}.kwik-success .privacy span{color:#60796d}.kwik-success button{border:0;background:#101a31;color:#fff;border-radius:10px;padding:11px 17px;font-size:11px;font-weight:800}.kwik-hidden-workspace{display:none!important}
+@media(max-width:760px){.kwik-page-row{grid-template-columns:20px 55px 1fr}.kwik-page-settings{grid-column:2/-1;justify-content:flex-start}.kwik-preview-body{grid-template-columns:1fr}.kwik-preview-controls{border-left:0;border-top:1px solid #e1e7ef}.kwik-preview-stage{min-height:360px}.kwik-preview-modal{padding:10px}}
+`;
+document.head.appendChild(injectedStyle);
 
- toolModal.classList.add("open");
- toolModal.setAttribute("aria-hidden","false");
- document.body.style.overflow="hidden";
- renderPdfImages();
- setTimeout(()=>imageFiles.focus(),80);
-}
-function closeImagePdf(){
- toolModal.classList.remove("open");
- toolModal.setAttribute("aria-hidden","true");
- document.body.style.overflow="";
-}
-document.getElementById("closeTool").addEventListener("click",closeImagePdf);
-document.querySelector("[data-close-tool]").addEventListener("click",closeImagePdf);
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&toolModal.classList.contains("open"))closeImagePdf()});
-imageFiles.addEventListener("change",e=>addFiles([...e.target.files]));
-["dragenter","dragover"].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add("dragover")}));
-["dragleave","drop"].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.remove("dragover")}));
-uploadZone.addEventListener("drop",e=>addFiles([...e.dataTransfer.files]));
-uploadZone.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();imageFiles.click()}});
-
-function addFiles(files){
- const valid=files.filter(f=>/^(image\/jpeg|image\/png)$/i.test(f.type));
- if(valid.length<files.length)showToast("Only JPG and PNG images are supported.");
- valid.forEach(file=>{
-   const item={
-        file,
-        url:URL.createObjectURL(file),
-        rotation:0,
-        naturalWidth:0,
-        naturalHeight:0,
-        pageSize:document.getElementById("pageSize").value,
-        orientation:document.getElementById("orientation").value,
-        margin:Number(document.getElementById("margin").value)||0
-      };
-      pdfImages.push(item);
-      captureNaturalSize(item);
- });
- renderPdfImages();
-  updatePdfPreview();
-}
-
-function getPdfPageSpec(item){
-  const pageSize=item.pageSize || document.getElementById("pageSize").value;
-  const orientation=item.orientation || document.getElementById("orientation").value;
-  const marginMm=Number(item.margin ?? document.getElementById("margin").value)||0;
-  const iw=item.naturalWidth||1000, ih=item.naturalHeight||1400;
-
-  let pw=210, ph=297;
-  if(pageSize==="letter"){ pw=215.9; ph=279.4; }
-  if(pageSize==="image"){
-    pw=iw*25.4/96 + marginMm*2;
-    ph=ih*25.4/96 + marginMm*2;
-    pw=Math.max(25,pw); ph=Math.max(25,ph);
-  }
-
-  if(orientation==="landscape" && ph>pw){ const t=pw; pw=ph; ph=t; }
-  if(orientation==="portrait" && pw>ph){ const t=pw; pw=ph; ph=t; }
-  if(orientation==="auto" && pageSize!=="image" && iw>ih){ const t=pw; pw=ph; ph=t; }
-
-  return {pw,ph,marginMm,iw,ih,pageSize,orientation};
-}
-
-let selectedPdfPage=0;
-
-function updatePdfPreview(){
-  const stage=document.getElementById("pdfPreviewStage");
-  const empty=document.getElementById("previewEmpty");
-  const count=document.getElementById("previewPageCount");
-  const title=document.getElementById("previewTitle");
-  if(!stage)return;
-
-  stage.querySelectorAll(".preview-page").forEach(n=>n.remove());
-  const total=pdfImages.length;
-  if(count) count.textContent=`${total} ${total===1?"page":"pages"}`;
-
-  if(total===0){
-    if(empty) empty.style.display="";
-    if(title) title.textContent="Selected page";
-    return;
-  }
-
-  if(selectedPdfPage>=total) selectedPdfPage=total-1;
-  if(selectedPdfPage<0) selectedPdfPage=0;
-
-  if(empty) empty.style.display="none";
-  const item=pdfImages[selectedPdfPage];
-  const s=getPdfPageSpec(item);
-
-  const maxW=Math.max(180,stage.clientWidth-48);
-  const maxH=Math.max(260,stage.clientHeight-48);
-  const scale=Math.min(maxW/s.pw,maxH/s.ph);
-
-  const page=document.createElement("div");
-  page.className="preview-page";
-  page.style.width=`${s.pw*scale}px`;
-  page.style.height=`${s.ph*scale}px`;
-
-  const img=document.createElement("img");
-  img.src=item.url;
-  img.alt=`Page ${selectedPdfPage+1}`;
-  const availableW=Math.max(1,s.pw-s.marginMm*2);
-  const availableH=Math.max(1,s.ph-s.marginMm*2);
-  const fit=Math.min(availableW/s.iw,availableH/s.ih);
-  const iw=s.iw*fit*scale, ih=s.ih*fit*scale;
-
-  img.style.width=`${iw}px`;
-  img.style.height=`${ih}px`;
-  img.style.left=`${(s.pw*scale-iw)/2}px`;
-  img.style.top=`${(s.ph*scale-ih)/2}px`;
-  img.style.transform=`rotate(${item.rotation||0}deg)`;
-  page.appendChild(img);
-
-  const badge=document.createElement("span");
-  badge.textContent=`Page ${selectedPdfPage+1}`;
-  badge.style.cssText="position:absolute;left:10px;top:10px;z-index:2;padding:5px 9px;border-radius:999px;background:rgba(17,24,39,.78);color:#fff;font:700 11px system-ui;letter-spacing:.01em;";
-  page.appendChild(badge);
-  stage.appendChild(page);
-
-  if(title) title.textContent=`Page ${selectedPdfPage+1} of ${total}`;
-
-  document.querySelectorAll(".image-row").forEach((row,i)=>{
-    row.classList.toggle("preview-selected",i===selectedPdfPage);
-  });
-}
-
-function captureNaturalSize(item){
-  return new Promise((resolve)=>{
-    const img=new Image();
-    img.onload=()=>{
-      item.naturalWidth=img.naturalWidth;
-      item.naturalHeight=img.naturalHeight;
-      updatePdfPreview();
-      resolve();
-    };
-    img.onerror=resolve;
-    img.src=item.url;
-  });
-}
-
-function renderPdfImages(){
- fileCount.textContent=`${pdfImages.length} image${pdfImages.length===1?"":"s"}`;
- createPdf.disabled=pdfImages.length===0;
- pdfStatus.textContent=pdfImages.length?`${pdfImages.length} image${pdfImages.length===1?"":"s"} ready.`:"Add images to get started.";
- imageList.innerHTML=pdfImages.map((item,i)=>`
- <div class="image-item">
-   <img class="image-thumb" src="${item.url}" style="transform:rotate(${item.rotation}deg)" alt="">
-   <div class="image-meta"><b>${escapeHtml(item.file.name)}</b><small>${formatBytes(item.file.size)} · Page ${i+1}</small></div>
-   <div class="image-actions">
-    <button type="button" data-pdf-action="up" data-index="${i}" aria-label="Move up" ${i===0?"disabled":""}>↑</button>
-    <button type="button" data-pdf-action="down" data-index="${i}" aria-label="Move down" ${i===pdfImages.length-1?"disabled":""}>↓</button>
-    <button type="button" data-pdf-action="rotate" data-index="${i}" aria-label="Rotate">↻</button>
-    <button type="button" data-pdf-action="remove" data-index="${i}" aria-label="Remove">×</button>
-   </div>
- </div>`).join("");
- imageList.querySelectorAll("[data-pdf-action]").forEach(btn=>btn.addEventListener("click",()=>{
-   const i=Number(btn.dataset.index),action=btn.dataset.pdfAction;
-   if(action==="remove"){URL.revokeObjectURL(pdfImages[i].url);pdfImages.splice(i,1)}
-   if(action==="rotate")pdfImages[i].rotation=(pdfImages[i].rotation+90)%360;
-   if(action==="up"&&i>0)[pdfImages[i-1],pdfImages[i]]=[pdfImages[i],pdfImages[i-1]];
-   if(action==="down"&&i<pdfImages.length-1)[pdfImages[i+1],pdfImages[i]]=[pdfImages[i],pdfImages[i+1]];
-   renderPdfImages();
- }));
-}
-clearImages.addEventListener("click",()=>{pdfImages.forEach(x=>URL.revokeObjectURL(x.url));pdfImages=[];imageFiles.value="";renderPdfImages()});
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function formatBytes(n){if(n<1024)return `${n} B`;if(n<1048576)return `${(n/1024).toFixed(1)} KB`;return `${(n/1048576).toFixed(1)} MB`}
-
-async function fileToDataUrl(file){
- return await new Promise((resolve,reject)=>{
-   const reader=new FileReader();
-   reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);
- });
-}
-
-function resetPdfSuccess(){
-  const success=document.getElementById("pdfSuccess");
-  const footer=document.getElementById("pdfWorkspaceFooter");
-  const zone=document.getElementById("uploadZone");
-  const opts=document.querySelector(".workspace-options");
-  const toolbar=document.querySelector(".file-toolbar");
-  const list=document.getElementById("imageList");
-  if(success) success.hidden=true;
-  if(footer) footer.hidden=false;
-  if(zone) zone.hidden=false;
-  if(opts) opts.hidden=false;
-  if(toolbar) toolbar.hidden=false;
-  if(list) list.hidden=false;
-}
-
-function showPdfSuccess(){
-  const success=document.getElementById("pdfSuccess");
-  const footer=document.getElementById("pdfWorkspaceFooter");
-  const zone=document.getElementById("uploadZone");
-  const opts=document.querySelector(".workspace-options");
-  const toolbar=document.querySelector(".file-toolbar");
-  const list=document.getElementById("imageList");
-
-  if(zone) zone.hidden=true;
-  if(opts) opts.hidden=true;
-  if(toolbar) toolbar.hidden=true;
-  if(list) list.hidden=true;
-  if(footer) footer.hidden=true;
-  if(success){
-    success.hidden=false;
-    requestAnimationFrame(()=>success.classList.add("is-visible"));
+function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function resetSuccess(){document.querySelectorAll('.workspace-head,.upload-zone,.workspace-options,.apply-all-bar,.file-toolbar,.kwik-pages-shell').forEach(x=>x?.classList.remove('kwik-hidden-workspace'));document.getElementById('kwikSuccess')?.classList.remove('show')}
+function ensureWorkspace(){
+  document.querySelector('.pdf-preview-panel')?.setAttribute('hidden','');
+  let shell=document.querySelector('.kwik-pages-shell');
+  if(!shell){
+    shell=document.createElement('div');shell.className='kwik-pages-shell';
+    shell.innerHTML=`<div class="kwik-pages-head"><div class="kph-title"><span>DOCUMENT PAGES</span><strong id="kwikPagesCount">0 pages</strong></div><div class="kwik-pages-actions"><button type="button" id="kwikSelectAll">Select all</button><button type="button" id="kwikClearSelection">Clear selection</button></div></div><div class="kwik-bulk" id="kwikBulk"><strong id="kwikSelectedText">0 selected</strong><select id="kwikBulkSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select><select id="kwikBulkOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select><select id="kwikBulkMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select><button class="apply" type="button" id="kwikApplyBulk">Apply to selected</button></div><div class="kwik-page-list" id="kwikPageList"></div>`;
+    const anchor=document.querySelector('.file-toolbar');anchor?.parentNode.insertBefore(shell,anchor.nextSibling);
+    document.getElementById('kwikSelectAll').onclick=()=>{pdfImages.forEach((_,i)=>selectedSet.add(i));renderPdfImages()};
+    document.getElementById('kwikClearSelection').onclick=()=>{selectedSet.clear();renderPdfImages()};
+    document.getElementById('kwikApplyBulk').onclick=applyBulk;
   }
+  ensureSuccessPanel();
 }
+function ensureSuccessPanel(){if(document.getElementById('kwikSuccess'))return;const s=document.createElement('div');s.className='kwik-success';s.id='kwikSuccess';s.innerHTML=`<div class="kwik-success-icon">✓</div><h3>Thank you for using KwikToolForAll.</h3><p>Your PDF is now downloaded. Please check your Downloads folder.</p><div class="privacy">✓ Your privacy is protected<br><span>Your images were processed locally in your browser. Nothing was uploaded to our servers, and the temporary workspace has been cleared.</span></div><br><button type="button" id="kwikReuse">Re-use the tool</button>`;document.querySelector('.tool-workspace')?.appendChild(s);document.getElementById('kwikReuse').onclick=()=>{resetPdfWorkspace();resetSuccess()}}
+function showSuccess(){document.querySelectorAll('.workspace-head,.upload-zone,.workspace-options,.apply-all-bar,.file-toolbar,.kwik-pages-shell').forEach(x=>x?.classList.add('kwik-hidden-workspace'));document.getElementById('kwikSuccess')?.classList.add('show')}
+function resetPdfWorkspace(){pdfImages.forEach(x=>{try{URL.revokeObjectURL(x.url)}catch(e){}});pdfImages=[];selectedSet.clear();selectedPage=0;if(imageFiles)imageFiles.value='';closePreview();if(fileCount)fileCount.textContent='0 images';if(pdfStatus)pdfStatus.textContent='Add images to get started.';if(createPdf)createPdf.disabled=true;renderPdfImages()}
+function addFiles(files){const valid=files.filter(f=>/^(image\/jpeg|image\/png)$/i.test(f.type));if(valid.length<files.length)showToast('Only JPG and PNG images are supported.');valid.forEach(file=>{const item={file,url:URL.createObjectURL(file),rotation:0,naturalWidth:0,naturalHeight:0,pageSize:pageSize.value,orientation:orientation.value,margin:Number(margin.value)||0};pdfImages.push(item);captureNaturalSize(item)});renderPdfImages()}
+function captureNaturalSize(item){return new Promise(resolve=>{const img=new Image();img.onload=()=>{item.naturalWidth=img.naturalWidth;item.naturalHeight=img.naturalHeight;renderPdfImages();resolve()};img.onerror=resolve;img.src=item.url})}
+function getSpec(item){const iw=item.naturalWidth||1000,ih=item.naturalHeight||1400,mm=Number(item.margin)||0;let pw=210,ph=297;if(item.pageSize==='letter'){pw=215.9;ph=279.4}if(item.pageSize==='image'){pw=Math.max(25,iw*25.4/96+mm*2);ph=Math.max(25,ih*25.4/96+mm*2)}if(item.orientation==='landscape'&&ph>pw)[pw,ph]=[ph,pw];if(item.orientation==='portrait'&&pw>ph)[pw,ph]=[ph,pw];if(item.orientation==='auto'&&item.pageSize!=='image'&&iw>ih)[pw,ph]=[ph,pw];return{pw,ph,iw,ih,mm}}
+function renderPdfImages(){ensureWorkspace();fileCount.textContent=`${pdfImages.length} image${pdfImages.length===1?'':'s'}`;createPdf.disabled=!pdfImages.length;pdfStatus.textContent=pdfImages.length?`${pdfImages.length} image${pdfImages.length===1?'':'s'} ready.`:'Add images to get started.';const list=document.getElementById('kwikPageList');if(!list)return;document.getElementById('kwikPagesCount').textContent=`${pdfImages.length} page${pdfImages.length===1?'':'s'}`;selectedSet=new Set([...selectedSet].filter(i=>i>=0&&i<pdfImages.length));document.getElementById('kwikSelectedText').textContent=`${selectedSet.size} selected`;document.getElementById('kwikBulk').classList.toggle('show',selectedSet.size>0);if(!pdfImages.length){list.innerHTML='<div class="kwik-empty"><strong>No images added yet</strong><span>Add JPG or PNG files above to build your document.</span></div>';return}list.innerHTML=pdfImages.map((item,i)=>`<div class="kwik-page-row ${i===selectedPage?'active':''}"><input class="kwik-page-check" type="checkbox" ${selectedSet.has(i)?'checked':''} data-select="${i}" aria-label="Select page ${i+1}"><img class="kwik-thumb" src="${item.url}" data-preview="${i}" alt="Page ${i+1}"><div class="kwik-page-meta"><strong>Page ${i+1} · ${escapeHtml(item.file.name)}</strong><small>${formatBytes(item.file.size)} · ${item.pageSize==='image'?'Image size':item.pageSize.toUpperCase()} · ${item.orientation} · ${item.margin} mm margin</small></div><div class="kwik-page-settings"><label>Size<select data-setting="size" data-index="${i}"><option value="a4" ${item.pageSize==='a4'?'selected':''}>A4</option><option value="letter" ${item.pageSize==='letter'?'selected':''}>Letter</option><option value="image" ${item.pageSize==='image'?'selected':''}>Image</option></select></label><label>Orientation<select data-setting="orientation" data-index="${i}"><option value="auto" ${item.orientation==='auto'?'selected':''}>Auto</option><option value="portrait" ${item.orientation==='portrait'?'selected':''}>Portrait</option><option value="landscape" ${item.orientation==='landscape'?'selected':''}>Landscape</select></label><label>Margin<select data-setting="margin" data-index="${i}"><option value="10" ${item.margin===10?'selected':''}>10</option><option value="5" ${item.margin===5?'selected':''}>5</option><option value="0" ${item.margin===0?'selected':''}>0</option></select></label><button class="kwik-icon-btn" data-action="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button class="kwik-icon-btn" data-action="down" data-index="${i}" ${i===pdfImages.length-1?'disabled':''}>↓</button><button class="kwik-icon-btn" data-action="rotate" data-index="${i}">↻</button><button class="kwik-icon-btn danger" data-action="remove" data-index="${i}">×</button></div></div>`).join('');list.querySelectorAll('[data-preview]').forEach(x=>x.onclick=()=>openPreview(Number(x.dataset.preview)));list.querySelectorAll('[data-select]').forEach(x=>x.onchange=()=>{const i=Number(x.dataset.select);x.checked?selectedSet.add(i):selectedSet.delete(i);selectedPage=i;renderPdfImages()});list.querySelectorAll('[data-setting]').forEach(x=>x.onchange=()=>{const i=Number(x.dataset.index),k=x.dataset.setting;pdfImages[i][k==='size'?'pageSize':k]=k==='margin'?Number(x.value):x.value;selectedPage=i;renderPdfImages()});list.querySelectorAll('[data-action]').forEach(x=>x.onclick=()=>pageAction(x.dataset.action,Number(x.dataset.index)))}
+function pageAction(action,i){if(action==='remove'){URL.revokeObjectURL(pdfImages[i].url);pdfImages.splice(i,1);selectedSet=new Set([...selectedSet].filter(x=>x!==i).map(x=>x>i?x-1:x));selectedPage=Math.min(selectedPage,Math.max(0,pdfImages.length-1))}else if(action==='up'&&i>0){[pdfImages[i-1],pdfImages[i]]=[pdfImages[i],pdfImages[i-1]];remapSelection(i,i-1);selectedPage=i-1}else if(action==='down'&&i<pdfImages.length-1){[pdfImages[i+1],pdfImages[i]]=[pdfImages[i],pdfImages[i+1]];remapSelection(i,i+1);selectedPage=i+1}else if(action==='rotate'){pdfImages[i].rotation=(pdfImages[i].rotation+90)%360;selectedPage=i}renderPdfImages()}
+function remapSelection(a,b){const next=new Set();selectedSet.forEach(x=>next.add(x===a?b:x===b?a:x));selectedSet=next}
+function applyBulk(){const size=document.getElementById('kwikBulkSize').value,ori=document.getElementById('kwikBulkOrientation').value,mar=Number(document.getElementById('kwikBulkMargin').value);const n=selectedSet.size;selectedSet.forEach(i=>{pdfImages[i].pageSize=size;pdfImages[i].orientation=ori;pdfImages[i].margin=mar});renderPdfImages();showToast(`Applied settings to ${n} selected page${n===1?'':'s'}.`)}
+function openPreview(i){selectedPage=i;let modal=document.getElementById('kwikPreviewModal');if(!modal){modal=document.createElement('div');modal.className='kwik-preview-modal';modal.id='kwikPreviewModal';modal.innerHTML=`<div class="kwik-preview-backdrop"></div><div class="kwik-preview-card" role="dialog" aria-modal="true"><div class="kwik-preview-head"><strong id="kwikPreviewTitle">Live page preview</strong><button class="kwik-preview-close" id="kwikPreviewClose">×</button></div><div class="kwik-preview-body"><div class="kwik-preview-stage" id="kwikPreviewStage"></div><div class="kwik-preview-controls"><label>Page size<select id="kwikPreviewSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select></label><label>Orientation<select id="kwikPreviewOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label><label>Margin<select id="kwikPreviewMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select></label><button id="kwikPreviewRotate">↻ Rotate image</button><button class="primary" id="kwikPreviewDone">Done</button><div class="kwik-preview-hint">Changes are saved to this page immediately.</div></div></div></div>`;document.body.appendChild(modal);document.getElementById('kwikPreviewClose').onclick=closePreview;document.getElementById('kwikPreviewDone').onclick=closePreview;modal.querySelector('.kwik-preview-backdrop').onclick=closePreview;document.getElementById('kwikPreviewSize').onchange=e=>{pdfImages[selectedPage].pageSize=e.target.value;renderPreview();renderPdfImages()};document.getElementById('kwikPreviewOrientation').onchange=e=>{pdfImages[selectedPage].orientation=e.target.value;renderPreview();renderPdfImages()};document.getElementById('kwikPreviewMargin').onchange=e=>{pdfImages[selectedPage].margin=Number(e.target.value);renderPreview();renderPdfImages()};document.getElementById('kwikPreviewRotate').onclick=()=>{pdfImages[selectedPage].rotation=(pdfImages[selectedPage].rotation+90)%360;renderPreview();renderPdfImages()}}modal.classList.add('open');previewOpen=true;document.body.style.overflow='hidden';renderPreview()}
+function renderPreview(){const item=pdfImages[selectedPage];if(!item)return;const s=getSpec(item),stage=document.getElementById('kwikPreviewStage');if(!stage)return;document.getElementById('kwikPreviewTitle').textContent=`Page ${selectedPage+1} of ${pdfImages.length} · Live preview`;document.getElementById('kwikPreviewSize').value=item.pageSize;document.getElementById('kwikPreviewOrientation').value=item.orientation;document.getElementById('kwikPreviewMargin').value=String(item.margin);stage.innerHTML='';const maxW=Math.max(220,stage.clientWidth-48),maxH=Math.max(300,stage.clientHeight-48),scale=Math.min(maxW/s.pw,maxH/s.ph);const paper=document.createElement('div');paper.className='kwik-paper';paper.style.width=`${s.pw*scale}px`;paper.style.height=`${s.ph*scale}px`;const img=document.createElement('img');img.src=item.url;const fit=Math.min((s.pw-s.mm*2)/s.iw,(s.ph-s.mm*2)/s.ih);img.style.width=`${Math.max(1,s.iw*fit*scale)}px`;img.style.height=`${Math.max(1,s.ih*fit*scale)}px`;img.style.transform=`rotate(${item.rotation}deg)`;paper.appendChild(img);stage.appendChild(paper)}
+function closePreview(){document.getElementById('kwikPreviewModal')?.classList.remove('open');previewOpen=false;if(toolModal?.classList.contains('open'))document.body.style.overflow='hidden'}
+async function createImagePdf(){if(!pdfImages.length)return;createPdf.disabled=true;pdfStatus.textContent='Creating your PDF…';try{const enc=new TextEncoder(),chunks=[],offsets=[0];let pos=0;const push=s=>{const b=typeof s==='string'?enc.encode(s):s;chunks.push(b);pos+=b.length};push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');const objs=[],add=x=>{objs.push(x);return objs.length},catalog=add(null),pagesId=add(null),pids=[],cids=[],iids=[];for(const item of pdfImages){const s=getSpec(item),img=await new Promise((res,rej)=>{const x=new Image();x.onload=()=>res(x);x.onerror=rej;x.src=item.url});const pt=72/25.4,w=Math.max(1,Math.round(s.pw*pt)),h=Math.max(1,Math.round(s.ph*pt)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);const fit=Math.min((s.pw-s.mm*2)/s.iw,(s.ph-s.mm*2)/s.ih),dw=s.iw*fit*pt,dh=s.ih*fit*pt;ctx.save();ctx.translate(w/2,h/2);ctx.rotate(item.rotation*Math.PI/180);ctx.drawImage(img,-dw/2,-dh/2,dw,dh);ctx.restore();const b64=canvas.toDataURL('image/jpeg',.92).split(',')[1],bin=atob(b64),jpeg=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)jpeg[j]=bin.charCodeAt(j);iids.push(add({dict:`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>`,stream:jpeg}));const cb=enc.encode(`q\n${w} 0 0 ${h} 0 0 cm\n/Im0 Do\nQ\n`);cids.push(add({dict:`<< /Length ${cb.length} >>`,stream:cb}));pids.push(add(null))}objs[catalog-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;objs[pagesId-1]=`<< /Type /Pages /Kids [${pids.map(x=>x+' 0 R').join(' ')}] /Count ${pids.length} >>`;for(let i=0;i<pids.length;i++){const d=objs[iids[i]-1].dict,ww=d.match(/\/Width (\d+)/)[1],hh=d.match(/\/Height (\d+)/)[1];objs[pids[i]-1]=`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${ww} ${hh}] /Resources << /XObject << /Im0 ${iids[i]} 0 R >> >> /Contents ${cids[i]} 0 R >>`}objs.forEach((o,i)=>{offsets[i+1]=pos;push(`${i+1} 0 obj\n`);if(typeof o==='string')push(o+'\nendobj\n');else{push(o.dict+'\nstream\n');push(o.stream);push('\nendstream\nendobj\n')}});const xref=pos;push(`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`);for(let i=1;i<=objs.length;i++)push(String(offsets[i]).padStart(10,'0')+' 00000 n \n');push(`trailer\n<< /Size ${objs.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`);const blob=new Blob(chunks,{type:'application/pdf'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`KwikToolForAll-images-${new Date().toISOString().slice(0,10)}.pdf`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);resetPdfWorkspace();showSuccess()}catch(err){console.error(err);pdfStatus.textContent='Could not create the PDF. Please try again with JPG or PNG images.';createPdf.disabled=false}}
+function openImagePdf(){resetSuccess();ensureWorkspace();toolModal.classList.add('open');toolModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';renderPdfImages()}
+function closeImagePdf(){closePreview();toolModal.classList.remove('open');toolModal.setAttribute('aria-hidden','true');document.body.style.overflow=''}
 
-function clearPdfWorkspace(){
-  pdfImages.forEach(item=>{
-    try{ URL.revokeObjectURL(item.url); }catch(e){}
-  });
-  pdfImages=[];
-  renderPdfImages();
-  const status=document.getElementById("pdfStatus");
-  if(status) status.textContent="Add images to get started.";
-}
-
-async function createImagePdf(){
-  const status=document.getElementById("pdfStatus");
-  const btn=document.getElementById("createPdf");
-  if(!pdfImages.length){
-    status.textContent="Add at least one image.";
-    return;
-  }
-
-  btn.disabled=true;
-  status.textContent="Creating PDF locally…";
-
-  try{
-    const pages=[];
-    for(const item of pdfImages){
-      const info=await kwikImageToJpeg(item);
-      const iw=info.imgWidth, ih=info.imgHeight;
-      const pageSize=item.pageSize || document.getElementById("pageSize").value;
-      const orientation=item.orientation || document.getElementById("orientation").value;
-      const marginMm=Number(item.margin ?? document.getElementById("margin").value)||0;
-
-      let pw,ph;
-      if(pageSize==="letter"){
-        pw=215.9; ph=279.4;
-      }else if(pageSize==="image"){
-        pw=iw*25.4/96 + marginMm*2;
-        ph=ih*25.4/96 + marginMm*2;
-        pw=Math.max(25,pw); ph=Math.max(25,ph);
-      }else{
-        pw=210; ph=297;
-      }
-
-      if(orientation==="landscape" && ph>pw){ const t=pw; pw=ph; ph=t; }
-      if(orientation==="portrait" && pw>ph){ const t=pw; pw=ph; ph=t; }
-      if(orientation==="auto" && pageSize!=="image" && iw>ih){ const t=pw; pw=ph; ph=t; }
-
-      const maxW=Math.max(1,pw-marginMm*2);
-      const maxH=Math.max(1,ph-marginMm*2);
-      const scale=Math.min(maxW/iw,maxH/ih);
-      const w=iw*scale, h=ih*scale;
-      const x=(pw-w)/2, y=(ph-h)/2;
-
-      // Render the image onto a white page-sized canvas so the PDF is simple
-      // and reliable across browsers/readers.
-      const pxPerMm=96/25.4;
-      const canvas=document.createElement("canvas");
-      canvas.width=Math.max(1,Math.round(pw*pxPerMm));
-      canvas.height=Math.max(1,Math.round(ph*pxPerMm));
-      const ctx=canvas.getContext("2d");
-      ctx.fillStyle="#ffffff";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-
-      const img=new Image();
-      await new Promise((resolve,reject)=>{
-        img.onload=resolve; img.onerror=()=>reject(new Error("Could not render image."));
-        img.src=item.url;
-      });
-      ctx.drawImage(
-        img,
-        Math.round(x*pxPerMm), Math.round(y*pxPerMm),
-        Math.round(w*pxPerMm), Math.round(h*pxPerMm)
-      );
-      const jpeg=kwikDataUrlToBytes(canvas.toDataURL("image/jpeg",0.9));
-      pages.push({
-        width:pw*72/25.4,
-        height:ph*72/25.4,
-        imgWidth:canvas.width,
-        imgHeight:canvas.height,
-        jpeg
-      });
-    }
-
-    const blob=kwikMakePdf(pages);
-    const a=document.createElement("a");
-    const date=new Date().toISOString().slice(0,10);
-    a.href=URL.createObjectURL(blob);
-    a.download=`KwikToolForAll-images-${date}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-
-    // The PDF is already downloaded. Clear the temporary browser workspace
-    // before showing the privacy confirmation.
-    clearPdfWorkspace();
-    status.textContent="✓ PDF created and downloaded.";
-    showPdfSuccess();
-  }catch(err){
-    console.error(err);
-    status.textContent="Could not create the PDF. Please try again with JPG or PNG images.";
-  }finally{
-    btn.disabled=false;
-  }
-}
-
-function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src})}
-createPdf.addEventListener("click",createImagePdf);
-
+document.getElementById('closeTool')?.addEventListener('click',closeImagePdf);document.querySelector('[data-close-tool]')?.addEventListener('click',closeImagePdf);document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(previewOpen)closePreview();else if(toolModal.classList.contains('open'))closeImagePdf()}});imageFiles?.addEventListener('change',e=>addFiles([...e.target.files]));['dragenter','dragover'].forEach(ev=>uploadZone?.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add('dragover')}));['dragleave','drop'].forEach(ev=>uploadZone?.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.remove('dragover')}));uploadZone?.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));uploadZone?.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();imageFiles?.click()}});clearImages?.addEventListener('click',resetPdfWorkspace);document.getElementById('applyAllSettings')?.addEventListener('click',()=>{pdfImages.forEach(x=>{x.pageSize=pageSize.value;x.orientation=orientation.value;x.margin=Number(margin.value)});renderPdfImages();showToast('Settings applied to all pages.')});createPdf?.addEventListener('click',createImagePdf);
 function runSearch(q){search.value=q;render(q);document.getElementById("tools").scrollIntoView({behavior:"smooth",block:"start"})}
 document.getElementById("searchForm").addEventListener("submit",e=>{e.preventDefault();runSearch(search.value)});
 search.addEventListener("input",()=>render(search.value));
@@ -477,86 +118,4 @@ sections.forEach(s=>observer.observe(s));
 render();
 
 
-document.addEventListener("DOMContentLoaded",()=>{
-  ["pageSize","orientation","margin"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.addEventListener("change",updatePdfPreview);
-  });
-  const stage=document.getElementById("pdfPreviewStage");
-  if(stage) new ResizeObserver(()=>updatePdfPreview()).observe(stage);
-});
 
-document.getElementById("imageList").addEventListener("click",(e)=>{
-  const row=e.target.closest(".image-row");
-  if(!row)return;
-  const index=Number(row.dataset.index);
-  const action=e.target.closest("[data-action]")?.dataset.action;
-
-  if(!action){
-    selectedPdfPage=index;
-    updatePdfPreview();
-    return;
-  }
-
-  if(action==="up" && index>0){
-    [pdfImages[index-1],pdfImages[index]]=[pdfImages[index],pdfImages[index-1]];
-    selectedPdfPage=index-1;
-  }
-  if(action==="down" && index<pdfImages.length-1){
-    [pdfImages[index+1],pdfImages[index]]=[pdfImages[index],pdfImages[index+1]];
-    selectedPdfPage=index+1;
-  }
-  if(action==="rotate"){
-    pdfImages[index].rotation=(pdfImages[index].rotation+90)%360;
-    selectedPdfPage=index;
-  }
-  if(action==="remove"){
-    try{URL.revokeObjectURL(pdfImages[index].url)}catch(e){}
-    pdfImages.splice(index,1);
-    if(selectedPdfPage>=pdfImages.length) selectedPdfPage=Math.max(0,pdfImages.length-1);
-  }
-  renderPdfImages();
-  updatePdfPreview();
-});
-
-document.getElementById("imageList").addEventListener("change",(e)=>{
-  const select=e.target.closest("select[data-setting]");
-  if(!select)return;
-  const row=select.closest(".image-row");
-  const index=Number(row.dataset.index);
-  const setting=select.dataset.setting;
-  pdfImages[index][setting]=setting==="margin"?Number(select.value):select.value;
-  selectedPdfPage=index;
-  updatePdfPreview();
-});
-
-document.addEventListener("DOMContentLoaded",()=>{
-  ["pageSize","orientation","margin"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){
-      el.addEventListener("input",updatePdfPreview);
-      el.addEventListener("change",updatePdfPreview);
-    }
-  });
-  const stage=document.getElementById("pdfPreviewStage");
-  if(stage && window.ResizeObserver){
-    new ResizeObserver(()=>updatePdfPreview()).observe(stage);
-  }
-});
-
-document.getElementById("applyAllSettings").addEventListener("click",()=>{
-  const size=document.getElementById("pageSize").value;
-  const orientation=document.getElementById("orientation").value;
-  const margin=Number(document.getElementById("margin").value)||0;
-  pdfImages.forEach(item=>{
-    item.pageSize=size;
-    item.orientation=orientation;
-    item.margin=margin;
-  });
-  renderPdfImages();
-  updatePdfPreview();
-  const status=document.getElementById("pdfStatus");
-  if(status) status.textContent=pdfImages.length
-    ? "✓ Settings applied to all pages."
-    : "Add images to get started.";
-});
