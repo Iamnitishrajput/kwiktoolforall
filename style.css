@@ -648,3 +648,54 @@ body.dark .pdf-success{background:linear-gradient(120deg,#0f1c2d,#10271f);border
 body.dark .privacy-confirm{background:#10281f!important;border-color:#2b5b48!important}
 /* Do not hide the theme control at narrow widths. */
 @media(max-width:480px){.header-actions .circle-btn:first-child{display:none}.header-actions .theme-toggle{display:inline-flex!important}}
+
+
+/* Scanner V17: focused mobile/desktop workspace */
+.scanner-workspace{padding-bottom:8px}
+.scanner-canvas-panel{position:sticky;top:0;align-self:start;z-index:4}
+.scanner-stage{min-height:390px;max-height:min(54vh,520px);touch-action:none}
+.scanner-stage canvas{max-width:100%;max-height:min(50vh,480px);object-fit:contain}
+.scanner-upload-actions{justify-content:flex-start}
+.scanner-button.primary{min-width:180px;justify-content:center}
+.scanner-filter-grid{grid-template-columns:repeat(3,1fr)}
+.scanner-filter-grid button{min-height:38px}
+.scanner-export-grid{grid-template-columns:repeat(3,1fr)}
+.scanner-export-grid button{min-height:40px}
+.scanner-export-grid button.active{background:#087be9;border-color:#087be9;color:#fff;box-shadow:0 0 0 2px rgba(8,123,233,.12)}
+.scanner-format-note{font-size:9px;color:#7b899d;margin:7px 0 0;line-height:1.4}
+.scanner-export-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:7px;margin-top:9px}
+.download-scan,.device-share-option{width:100%;border:1px solid #cfe0ee;border-radius:9px;padding:10px;background:#f7fbff;color:#087be9;font-size:10px;font-weight:900;cursor:pointer}
+.full-control{width:100%;margin-top:6px;border:1px solid #d8e2ec;background:#fff;color:#334964;border-radius:8px;padding:8px 10px;font-size:9px;font-weight:800;cursor:pointer}
+.scanner-share-panel{position:absolute;right:14px;bottom:58px;width:min(420px,calc(100% - 28px));z-index:20}
+.device-share-option{background:#087be9;color:#fff;border-color:#087be9}
+.scanner-success{display:flex;flex-direction:column;align-items:center;text-align:center;padding:52px 28px 30px;min-height:520px;justify-content:center}
+.scanner-success[hidden]{display:none!important}
+.scanner-success.is-visible{animation:successIn .35s ease both}
+.scanner-success .success-orbit{margin-bottom:18px}
+.scanner-success .privacy-confirm{max-width:620px;width:100%;margin:18px auto 20px;text-align:left}
+.scanner-success .reuse-tool{margin-top:2px}
+body.dark .scanner-format-note{color:#9aabc2}
+body.dark .download-scan,body.dark .full-control{background:#152238;color:#eef4ff;border-color:#30445f}
+body.dark .device-share-option{background:#087be9;color:#fff;border-color:#087be9}
+@media(max-width:760px){
+  .scanner-layout{grid-template-columns:1fr;gap:10px}
+  .scanner-canvas-panel{position:sticky;top:0}
+  .scanner-stage{min-height:280px;max-height:42vh;padding:10px}
+  .scanner-stage canvas{max-height:38vh}
+  .scanner-controls{max-height:none}
+  .scanner-upload-actions{justify-content:stretch}
+  .scanner-button.primary{width:100%;min-height:44px}
+  .scanner-filter-grid{grid-template-columns:repeat(3,1fr)}
+  .scanner-export-actions{grid-template-columns:1fr}
+  .scanner-share-panel{left:8px;right:8px;bottom:58px;width:auto}
+  .scanner-success{padding:40px 16px 24px;min-height:430px}
+}
+@media(max-width:480px){
+  .scanner-stage{min-height:235px;max-height:34vh}
+  .scanner-stage canvas{max-height:31vh}
+  .scanner-page-actions button{flex:1 1 calc(33.333% - 5px);min-height:42px}
+  .scanner-filter-grid button,.scanner-export-grid button{min-height:42px}
+  .scanner-head h2{font-size:22px}
+  .scanner-upload{margin-top:12px}
+  .scanner-success h3{font-size:24px}
+}
