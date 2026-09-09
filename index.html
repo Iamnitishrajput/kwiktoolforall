@@ -1,150 +1,258 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KwikToolForAll — Simple tools. Real value.</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="KwikToolForAll — simple, useful file tools for everyday work.">
+<title>KwikToolForAll — Simple tools. Real value.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
-    <!-- Top Navigation Bar -->
-    <header class="navbar">
-        <div class="nav-logo" id="logo-home">KwikToolForAllEveryday</div>
-        <nav class="nav-links">
-            <span class="nav-item active" id="nav-home">Home</span>
-            <span class="nav-item" id="nav-scanner">Scan Document</span>
-            <span class="nav-item" id="nav-pdf">Image to PDF</span>
-        </nav>
-    </header>
+<header class="topbar" id="home">
+  <a class="brand" href="#home" aria-label="KwikToolForAll home">
+    <span class="brand-logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><defs><linearGradient id="kg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#kg)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg>
+    </span>
+    <span class="brand-copy"><b>KwikToolForAll</b><small>Everyday file tools</small></span>
+  </a>
+  <nav class="main-nav" aria-label="Main navigation">
+    <a href="#home" class="nav-link active">Home</a>
+    <a href="#tools" class="nav-link">Tools</a>
+    <a href="#how" class="nav-link">How it works</a>
+    <a href="#privacy" class="nav-link">Privacy</a>
+    <a href="#about" class="nav-link">About</a>
+  </nav>
+  <div class="header-actions">
+    <button class="circle-btn" id="searchFocus" aria-label="Focus search">⌕</button>
+    <button class="circle-btn theme-toggle" id="themeToggle" aria-label="Switch to dark mode" aria-pressed="false"><span class="theme-icon">☾</span><span class="theme-label">Dark</span></button>
+    <a class="explore-btn" href="#tools">Explore tools <span>→</span></a>
+  </div>
+  <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+</header>
 
-    <!-- Main App Container -->
-    <main class="container">
-        <!-- Landing View -->
-        <section id="view-home" class="app-view">
-            <div class="hero">
-                <h1>Your files. <strong>Your workflow.</strong> One toolbox.</h1>
-                <p>Convert, scan, extract, compress and share — without the hassle.</p>
-                <div class="search-box-container">
-                    <input type="text" class="search-box" placeholder="Search for tools...">
-                </div>
-                <div class="popular-tags">
-                    <span>Popular:</span>
-                    <button class="tag-link" data-target="pdf">Image to PDF</button>
-                    <button class="tag-link" data-target="scanner">Scan Document</button>
-                </div>
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-card" data-target="pdf">
-                    <h3>Image to PDF</h3>
-                    <p>Turn one or more JPG or PNG images into a PDF layout cleanly.</p>
-                </div>
-                <div class="feature-card" data-target="scanner">
-                    <h3>Document Scanner</h3>
-                    <p>Upload document snapshots, crop edges, filter tones, and clean templates.</p>
-                </div>
-            </div>
-        </section>
+<main>
+<section class="hero">
+  <div class="hero-copy">
+    <div class="kicker"><i></i> SIMPLE. FAST. USEFUL.</div>
+    <h1>Your files.<br><strong>Your workflow.</strong><br>One toolbox.</h1>
+    <p>Convert, scan, extract, compress and share — without the hassle.</p>
+    <form class="search-box" id="searchForm">
+      <span class="search-symbol">⌕</span>
+      <input id="toolSearch" type="search" placeholder="What do you want to do?  e.g. image to PDF" aria-label="Search tools">
+      <button type="submit">Search <b>→</b></button>
+    </form>
+    <div class="popular"><b>Popular:</b>
+      <button type="button" data-query="image to pdf">Image to PDF</button>
+      <button type="button" data-query="merge pdf">Merge PDF</button>
+      <button type="button" data-query="compress">Compress</button>
+      <button type="button" data-query="image to text">Image to Text</button>
+      <button type="button" data-query="scanner">Scan Document</button>
+    </div>
+  </div>
+  <div class="hero-art" aria-hidden="true">
+    <div class="art-glow"></div>
+    <div class="scribble one">Simple.<br>Fast.<br>Secure.<span></span></div>
+    <div class="visual-file photo"><div class="photo-art"><span>▲</span><span>●</span><span>△</span></div><b>JPG / PNG</b></div>
+    <div class="visual-arrow">→</div>
+    <div class="visual-file pdf"><strong>PDF</strong><div class="paper-lines"></div></div>
+    <div class="secure-float"><span>✓</span><div><b>Browser-first</b><small>Your files stay local whenever possible.</small></div></div>
+    <div class="scribble two">Tools<br>for real work<span></span></div>
+  </div>
+</section>
 
-        <!-- Document Scanner Tool View -->
-        <section id="view-scanner" class="app-view hidden">
-            <div class="tool-card">
-                <div class="tool-header">
-                    <div>
-                        <h2>Scan, clean & export</h2>
-                        <p class="subtitle">🔒 Local browser processing • No cloud uploads</p>
-                    </div>
-                    <button class="close-btn" id="scanner-close-btn">&times;</button>
-                </div>
+<section class="tools-area" id="tools">
+  <div class="section-head all-tools-head">
+    <div><span class="section-icon fire">✦</span><div><h2>All tools</h2><p>Browse every tool available in KwikToolForAll.</p></div></div>
+    <div class="all-tools-menu">
+      <button class="view-all all-tools-toggle" id="allToolsToggle" type="button" aria-expanded="false" aria-controls="allToolsDropdown">All tools <span>⌄</span></button>
+      <div class="all-tools-dropdown" id="allToolsDropdown" hidden></div>
+    </div>
+  </div>
+  <div class="tool-grid" id="toolGrid"></div>
+  <div class="empty-state" id="emptyState" hidden>
+    <div>⌕</div><h3>No matching tool</h3><p>Try “PDF”, “image”, “text”, “scan” or “share”.</p>
+    <button id="resetSearch">Show all tools</button>
+  </div>
+</section>
 
-                <div class="scanner-workspace">
-                    <!-- Left: Sticky Preview Panel -->
-                    <div class="scanner-preview-container">
-                        <div class="preview-box">
-                            <canvas id="scanner-canvas"></canvas>
-                            <!-- Crop Canvas layer overlay -->
-                            <canvas id="crop-overlay-canvas" class="hidden"></canvas>
-                            <div id="upload-placeholder" class="upload-placeholder">
-                                <p>Choose a document image to start editing</p>
-                            </div>
-                        </div>
-                        <div class="page-controls hidden" id="page-controls-row">
-                            <button id="btn-prev-page" class="btn-nav" disabled>&larr; Previous</button>
-                            <span id="page-counter">Page 1 of 1</span>
-                            <button id="btn-next-page" class="btn-nav" disabled>Next &rarr;</button>
-                        </div>
-                    </div>
 
-                    <!-- Right: Scrolling Options Panel -->
-                    <div class="scanner-controls-container">
-                        <div class="control-section">
-                            <h3>1. Source Image</h3>
-                            <div class="action-row">
-                                <label for="scanner-file-input" class="btn-primary">＋ Choose Images</label>
-                                <input type="file" id="scanner-file-input" accept="image/*" multiple style="display: none;">
-                                <button id="btn-toggle-crop" class="btn-secondary hidden">◪ Free Square Crop</button>
-                            </div>
-                        </div>
 
-                        <div class="control-section disabled-state" id="section-filters">
-                            <h3>2. Document Colour</h3>
-                            <div class="btn-toggle-group">
-                                <button class="filter-btn active" data-filter="original">Original</button>
-                                <button class="filter-btn" data-filter="bw">B&W</button>
-                                <button class="filter-btn" data-filter="grayscale">Greyscale</button>
-                            </div>
-                        </div>
+<section class="benefits">
+  <div><span class="benefit blue">ϟ</span><div><b>No installation</b><small>Works directly in your browser.</small></div></div>
+  <div><span class="benefit green">⌾</span><div><b>Privacy first</b><small>Local tools can keep files on your device.</small></div></div>
+  <div><span class="benefit purple">✦</span><div><b>Fast & easy</b><small>Get small jobs done in seconds.</small></div></div>
+  <div><span class="benefit red">♡</span><div><b>Built for everyone</b><small>Simple, clear and free to use.</small></div></div>
+  <div class="tagline">Get it done.<br><strong>Then move on.</strong> ✓</div>
+</section>
 
-                        <div class="control-section disabled-state" id="section-adjustments">
-                            <h3>3. Manual Fixes</h3>
-                            <div class="slider-group">
-                                <label>Brightness: <span id="val-brightness">100</span>%</label>
-                                <input type="range" id="slider-brightness" min="50" max="150" value="100" disabled>
-                            </div>
-                            <div class="slider-group">
-                                <label>Contrast: <span id="val-contrast">100</span>%</label>
-                                <input type="range" id="slider-contrast" min="50" max="150" value="100" disabled>
-                            </div>
-                            <div class="action-row text-center">
-                                <button id="btn-rotate" class="btn-secondary" style="width: 100%;" disabled>↺ Rotate 90&deg;</button>
-                            </div>
-                        </div>
+<section class="how-section" id="how">
+  <div class="center-title"><span>HOW IT WORKS</span><h2>One simple flow.</h2><p>Choose a task, add your files and finish the job.</p></div>
+  <div class="steps">
+    <article><b>01</b><span>⌕</span><h3>Choose a task</h3><p>Find the right tool using search or categories.</p></article>
+    <article><b>02</b><span>↥</span><h3>Add your files</h3><p>Use files directly from your device.</p></article>
+    <article><b>03</b><span>✦</span><h3>Get your result</h3><p>Download or share when the job is complete.</p></article>
+  </div>
+</section>
 
-                        <div class="control-section disabled-state" id="section-export">
-                            <h3>4. Output Configurations</h3>
-                            <div class="btn-toggle-group">
-                                <button class="format-btn active" data-format="pdf">PDF</button>
-                                <button class="format-btn" data-format="jpg">JPEG</button>
-                                <button class="format-btn" data-format="png">PNG</button>
-                            </div>
+<section class="privacy-section" id="privacy">
+  <div class="privacy-card">
+    <div class="privacy-icon">✓</div>
+    <div><span>PRIVACY FIRST</span><h2>Your files are yours.</h2>
+      <p>KwikToolForAll is designed around browser-first processing. When a feature can run locally, the file can stay on your device. Features that genuinely require temporary server processing will be designed with short-lived data and cleanup in mind.</p>
+    </div>
+    <div class="privacy-badge">🔒 Browser-first<br><small>where practical</small></div>
+  </div>
+</section>
 
-                            <div class="action-row export-buttons" style="margin-top: 20px;">
-                                <button id="btn-download" class="btn-primary-action" disabled>⬇ Download</button>
-                                <button id="btn-share" class="btn-share-action" disabled>↥ Share via Device/Apps</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+<section class="about-section" id="about">
+  <div class="about-grid">
+    <div class="about-label"><span>ABOUT THE CREATOR</span>
+      <div class="creator-logo"><svg viewBox="0 0 48 48"><defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#ag)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg></div>
+    </div>
+    <div class="about-copy">
+      <span>WHY KWIKTOOLFORALL?</span>
+      <h2>Built from a simple idea:<br><strong>work shouldn't feel harder than it is.</strong></h2>
+      <p>Hi, I'm <b>Nitish Kumar Singh</b>. I created KwikToolForAll to bring the small file utilities people repeatedly need into one clean, straightforward workspace.</p>
+      <p>Whether you're working with documents, PDFs, images or everyday office files, the goal is simple: fewer tabs, fewer confusing interfaces and less unnecessary uploading.</p>
+      <div class="creator-points"><span>01 <b>Useful first</b></span><span>02 <b>Privacy-minded</b></span><span>03 <b>Always improving</b></span></div>
+    </div>
+  </div>
+</section>
 
-        <!-- Universal Thank You Screen Component -->
-        <section id="view-thankyou" class="app-view hidden">
-            <div class="thank-you-card">
-                <div class="success-icon">✓</div>
-                <h2>Thank you for using KwikToolForAll.</h2>
-                <p>Your document execution task is complete.</p>
-                <p class="sub-alert">Please check your system's default <strong>Downloads</strong> folder.</p>
-                <div class="privacy-note">
-                    <strong>Your privacy is protected:</strong> Your media components were calculated locally within this isolated client session sandbox. No files were synced remotely.
-                </div>
-                <button id="btn-restart-tool" class="btn-primary" style="margin-top: 20px;">↻ Re-use the tool</button>
-            </div>
-        </section>
-    </main>
+<section class="final-cta">
+  <span>THE TOOLBOX IS JUST GETTING STARTED</span>
+  <h2>Find a tool.<br><strong>Get the job done.</strong></h2>
+  <a href="#tools">Explore KwikToolForAll →</a>
+</section>
+</main>
 
-    <footer class="footer">
-        <p>&copy; 2026 KwikToolForAll. Built by Nitish Kumar Singh. Simple tools. Real value.</p>
-    </footer>
+<footer>
+  <div class="footer-brand"><span class="brand-logo small-logo"><svg viewBox="0 0 48 48"><defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#fg)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg></span><div><b>KwikToolForAll</b><small>Everyday file tools</small></div></div>
+  <div class="footer-links"><a href="#tools">Tools</a><a href="#privacy">Privacy</a><a href="#about">About</a></div>
+  <p>Simple tools. Real value.</p>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+<div class="tool-modal" id="toolModal" aria-hidden="true">
+  <div class="tool-modal-backdrop" data-close-tool></div>
+  <section class="tool-workspace" role="dialog" aria-modal="true" aria-labelledby="workspaceTitle">
+    <button class="workspace-close" id="closeTool" aria-label="Close tool">×</button>
+    <div class="workspace-head">
+      <div>
+        <span class="workspace-kicker">PDF TOOL</span>
+        <h2 id="workspaceTitle">Image → PDF</h2>
+        <p>Turn one or more JPG or PNG images into a PDF directly in your browser.</p>
+      </div>
+      <span class="local-pill">● Local processing</span>
+    </div>
+
+    <div class="upload-zone" id="uploadZone" tabindex="0">
+      <div class="upload-icon">↥</div>
+      <h3>Drop your images here</h3>
+      <p>or choose JPG / PNG files from your device</p>
+      <label class="choose-files">Choose images<input id="imageFiles" type="file" accept="image/jpeg,image/png" multiple hidden></label>
+      <small>Your images stay in this browser. PDF creation runs locally — no upload.</small>
+    </div>
+
+    <div class="file-toolbar">
+      <strong id="fileCount">0 images</strong>
+      <button type="button" id="clearImages" class="text-btn">Clear all</button>
+    </div>
+
+    <section class="pdf-pages-section" aria-label="Document pages">
+      <div class="image-list-wrap">
+        <div class="image-list-head">
+          <div>
+            <span class="preview-kicker">DOCUMENT PAGES</span>
+            <strong>Pages</strong>
+          </div>
+          <div class="document-pages-actions">
+            <span id="previewPageCount">0 pages</span>
+            <button type="button" id="selectAllPages" class="pages-action-btn">Select all</button>
+          </div>
+        </div>
+        <div class="bulk-settings" id="bulkSettings" hidden>
+          <strong id="selectedCount">0 selected</strong>
+          <label>Size<select id="bulkSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select></label>
+          <label>Orientation<select id="bulkOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+          <label>Margin<select id="bulkMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select></label>
+          <button type="button" id="applySelected" class="apply-selected-btn">Apply to selected</button>
+        </div>
+        <div class="image-list" id="imageList"></div>
+      </div>
+    </section>
+
+    <div class="workspace-footer" id="pdfWorkspaceFooter">
+      <span id="pdfStatus">Add images to get started.</span>
+      <button type="button" id="createPdf" class="create-pdf" disabled>Create PDF <span>→</span></button>
+    </div>
+
+    <div class="pdf-success" id="pdfSuccess" hidden>
+      <div class="success-orbit">
+        <div class="success-check" aria-hidden="true"></div>
+      </div>
+      <span class="success-eyebrow">DOWNLOAD COMPLETE</span>
+      <h3>Thank you for using<br><strong>KwikToolForAll.</strong></h3>
+      <p class="success-main">Your file is now downloaded.</p>
+      <p class="success-sub">Please check your <strong>Downloads</strong> folder.</p>
+
+      <div class="privacy-confirm">
+        <span class="privacy-confirm-icon" aria-hidden="true"></span>
+        <div>
+          <strong>Your privacy is protected</strong>
+          <span>Your images were processed locally in your browser and were not uploaded to our servers. Temporary workspace data has been cleared.</span>
+        </div>
+      </div>
+
+      <button type="button" class="reuse-tool" id="reusePdfTool">
+        <span>↻</span> Re-use the tool
+      </button>
+      <small class="success-note">No account • No cloud storage • No file retained</small>
+    </div>
+
+    <div class="scanner-workspace" id="scannerWorkspace" hidden>
+      <div class="scanner-head">
+        <div><span class="workspace-kicker scanner-kicker">DOCUMENT SCANNER</span><h2>Scan, clean & export</h2><p>Upload document images, clean them automatically, crop freely and export locally.</p></div>
+        <span class="local-pill">● Local processing</span><button type="button" class="scanner-close-btn" id="scannerClose" aria-label="Close scanner">×</button>
+      </div>
+      <div class="scanner-upload" id="scannerUpload">
+        <div class="scanner-upload-actions">
+          <label class="scanner-button primary"><span>＋</span> Upload images<input id="scannerFiles" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden></label>
+        </div>
+        <label class="auto-scan-toggle"><input id="autoScan" type="checkbox" checked><span>Auto-detect document edges</span><small>Automatically crop the document area when possible.</small></label>
+        <p>Everything is processed in this browser. No camera or cloud upload is required.</p>
+      </div>
+      <div class="scanner-layout">
+        <div class="scanner-canvas-panel">
+          <div class="scanner-panel-head"><strong id="scannerPageTitle">No page selected</strong><span id="scannerPageCount">0 pages</span></div>
+          <div class="scanner-stage" id="scannerStage"><div class="scanner-empty">Upload a document image to begin.</div></div>
+          <div class="scanner-page-actions"><button type="button" id="scannerPrev">← Previous</button><button type="button" id="scannerNext">Next →</button><button type="button" id="scannerAddPage">＋ Add page</button></div>
+        </div>
+        <aside class="scanner-controls">
+          <div class="scanner-control-group"><strong>Document colour</strong><div class="chip-grid scanner-filter-grid" id="scannerFilters"><button type="button" data-filter="original" class="active">Original</button><button type="button" data-filter="gray">Grayscale</button><button type="button" data-filter="bw">B&amp;W</button></div></div>
+          <div class="scanner-control-group"><strong>Crop &amp; rotate</strong><div class="scanner-two"><button type="button" id="scannerAutoCrop">✦ Auto crop</button><button type="button" id="scannerManualCrop">Free crop</button></div><button type="button" id="scannerSquareCrop" class="full-control">□ Square crop</button><div class="scanner-two"><button type="button" id="scannerRotateLeft">↺ Rotate left</button><button type="button" id="scannerRotateRight">↻ Rotate right</button></div></div>
+          <div class="scanner-control-group"><strong>Page size</strong><select id="scannerPageSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="id">ID Card</option><option value="original">Original</option></select></div>
+          <div class="scanner-control-group"><strong>Export format</strong><div class="export-grid scanner-export-grid"><button type="button" data-export="pdf" class="active">PDF</button><button type="button" data-export="jpg">JPEG</button><button type="button" data-export="png">PNG</button></div><p class="scanner-format-note" id="scannerFormatNote">PDF selected · all pages will be included.</p><div class="scanner-export-actions"><button type="button" id="scannerDownload" class="download-scan">↓ Download</button><button type="button" id="scannerShare" class="share-all">↥ Share Device / Apps</button></div></div>
+          <p class="scanner-privacy">Local processing: your source images stay in this browser. No cloud upload is required for scanning or export.</p>
+        </aside>
+      </div>
+      <div class="scanner-bottom"><button type="button" id="scannerClear" class="text-btn">Clear scanner</button><span id="scannerStatus">Ready for a document.</span><button type="button" id="scannerDone" class="primary-action">Done</button></div>
+      <div class="scanner-success" id="scannerSuccess" hidden>
+        <div class="success-orbit"><div class="success-check" aria-hidden="true"></div></div>
+        <span class="success-eyebrow">DOWNLOAD COMPLETE</span>
+        <h3>Thank you for using<br><strong>KwikToolForAll.</strong></h3>
+        <p class="success-main" id="scannerSuccessMain">Your scanned file is now downloaded.</p>
+        <p class="success-sub">Please check your <strong>Downloads</strong> folder.</p>
+        <div class="privacy-confirm"><span class="privacy-confirm-icon" aria-hidden="true"></span><div><strong>Your privacy is protected</strong><span>Your document was processed locally in your browser and was not uploaded to our servers. Temporary workspace data has been cleared.</span></div></div>
+        <button type="button" class="reuse-tool" id="reuseScannerTool"><span>↻</span> Re-use the scanner</button>
+        <small class="success-note">No account • No cloud storage • No file retained</small>
+      </div>
+      <div class="scanner-share-panel" id="scannerSharePanel" hidden><div class="share-panel-head"><strong>Share scanned document</strong><button type="button" id="scannerShareClose">×</button></div><p>Your selected format will be shared through your device's available apps.</p><button type="button" data-share="system" class="device-share-option">📤 Share Device / Apps</button></div>
+    </div>
+  </section>
+</div>
+<script src="script.js?v=17"></script>
 </body>
 </html>
