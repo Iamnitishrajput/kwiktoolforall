@@ -161,6 +161,52 @@
   <p>Simple tools. Real value.</p>
 </footer>
 <div class="toast" id="toast" role="status"></div>
+<div class="tool-modal" id="toolModal" aria-hidden="true">
+  <div class="tool-modal-backdrop" data-close-tool></div>
+  <section class="tool-workspace" role="dialog" aria-modal="true" aria-labelledby="workspaceTitle">
+    <button class="workspace-close" id="closeTool" aria-label="Close tool">×</button>
+    <div class="workspace-head">
+      <div>
+        <span class="workspace-kicker">PDF TOOL</span>
+        <h2 id="workspaceTitle">Image → PDF</h2>
+        <p>Turn one or more JPG or PNG images into a PDF directly in your browser.</p>
+      </div>
+      <span class="local-pill">● Local processing</span>
+    </div>
+
+    <div class="upload-zone" id="uploadZone" tabindex="0">
+      <div class="upload-icon">↥</div>
+      <h3>Drop your images here</h3>
+      <p>or choose JPG / PNG files from your device</p>
+      <label class="choose-files">Choose images<input id="imageFiles" type="file" accept="image/jpeg,image/png" multiple hidden></label>
+      <small>Your images stay in this browser while the PDF is created.</small>
+    </div>
+
+    <div class="workspace-options">
+      <label>Page size
+        <select id="pageSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select>
+      </label>
+      <label>Orientation
+        <select id="orientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
+      </label>
+      <label>Margin
+        <select id="margin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select>
+      </label>
+    </div>
+
+    <div class="file-toolbar">
+      <strong id="fileCount">0 images</strong>
+      <button type="button" id="clearImages" class="text-btn">Clear all</button>
+    </div>
+    <div class="image-list" id="imageList"></div>
+
+    <div class="workspace-footer">
+      <span id="pdfStatus">Add images to get started.</span>
+      <button type="button" id="createPdf" class="create-pdf" disabled>Create PDF <span>→</span></button>
+    </div>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

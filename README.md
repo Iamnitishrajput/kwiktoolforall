@@ -14,3 +14,18 @@ This version addresses the reported UI issues:
 - No external JS libraries are required.
 
 The processing engines are not faked. Tool selection currently routes to the relevant tool area and explains that the actual processing workspace will be connected next.
+
+
+## First functional tool: Image → PDF
+The Image → PDF tool is now functional in the browser:
+- Multiple JPG/PNG selection
+- Drag and drop
+- Reorder pages
+- Rotate pages
+- Remove pages
+- A4 / Letter / Image-size option
+- Portrait / landscape / auto orientation
+- 0 / 5 / 10 mm margins
+- Client-side PDF creation with jsPDF
+- Automatic PDF download
+- No application server or file upload is used by this tool
