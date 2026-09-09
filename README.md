@@ -33,3 +33,7 @@ The Image → PDF tool is now functional in the browser:
 
 ## Image → PDF v2
 PDF generation now uses a local browser-side PDF engine. The tool no longer depends on the external jsPDF CDN for PDF creation. Image-size mode is supported, and JPG/PNG images are rendered onto white PDF pages locally.
+
+
+## Image → PDF v4 Combined
+Adds live PDF preview. Page size, orientation, margin, image order, and rotation are reflected in the preview before download. The final PDF uses the same settings and remains browser-local.
