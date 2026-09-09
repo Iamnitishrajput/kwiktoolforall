@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 <header class="topbar" id="home">
@@ -64,12 +64,9 @@
 </section>
 
 <section class="tools-area" id="tools">
-  <div class="section-head all-tools-head">
-    <div><span class="section-icon fire">✦</span><div><h2>All tools</h2><p>Browse every tool available in KwikToolForAll.</p></div></div>
-    <div class="all-tools-menu">
-      <button class="view-all all-tools-toggle" id="allToolsToggle" type="button" aria-expanded="false" aria-controls="allToolsDropdown">All tools <span>⌄</span></button>
-      <div class="all-tools-dropdown" id="allToolsDropdown" hidden></div>
-    </div>
+  <div class="section-head">
+    <div><span class="section-icon fire">✦</span><div><h2>Popular tools</h2><p>The tools people use the most.</p></div></div>
+    <button class="view-all" id="clearSearch">View all tools →</button>
   </div>
   <div class="tool-grid" id="toolGrid"></div>
   <div class="empty-state" id="emptyState" hidden>
@@ -78,7 +75,36 @@
   </div>
 </section>
 
-
+<section class="category-area" id="categories">
+  <div class="section-head">
+    <div><span class="section-icon grid-icon">▦</span><div><h2>All tools by category</h2><p>Choose a tool and jump straight to it.</p></div></div>
+    <span class="tool-count">10 tools</span>
+  </div>
+  <div class="category-grid">
+    <article class="category-card documents">
+      <header><span class="category-icon">▤</span><div><h3>Documents</h3><small>2 tools</small></div></header>
+      <button class="category-tool" data-tool-id="scanner"><span>Document Scanner</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="ocr"><span>Image → Text</span><b>→</b></button>
+    </article>
+    <article class="category-card pdf-tools">
+      <header><span class="category-icon">▥</span><div><h3>PDF Tools</h3><small>4 tools</small></div></header>
+      <button class="category-tool" data-tool-id="image-pdf"><span>Image → PDF</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="pdf-image"><span>PDF → JPG / PNG</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="merge"><span>Merge PDF</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="split"><span>Split PDF</span><b>→</b></button>
+    </article>
+    <article class="category-card images">
+      <header><span class="category-icon">▧</span><div><h3>Image Tools</h3><small>2 tools</small></div></header>
+      <button class="category-tool" data-tool-id="compress-image"><span>Compress Image</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="jpg-png"><span>JPG ↔ PNG</span><b>→</b></button>
+    </article>
+    <article class="category-card sharing">
+      <header><span class="category-icon">⌯</span><div><h3>Sharing</h3><small>2 tools</small></div></header>
+      <button class="category-tool" data-tool-id="share"><span>Share & Send</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="temporary"><span>Temporary Link</span><b>→</b></button>
+    </article>
+  </div>
+</section>
 
 <section class="benefits">
   <div><span class="benefit blue">ϟ</span><div><b>No installation</b><small>Works directly in your browser.</small></div></div>
@@ -213,6 +239,6 @@
     </div>
   </section>
 </div>
-<script src="script.js?v=8"></script>
+<script src="script.js?v=11"></script>
 </body>
 </html>
