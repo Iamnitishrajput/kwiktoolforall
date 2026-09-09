@@ -1,15 +1,19 @@
-KwikToolForAll V13 Stable
+KwikToolForAll V14 STABLE
 
-Replace these 3 files together in the GitHub Pages repository:
+This package stabilizes homepage navigation and preserves the current Image → PDF and Document Scanner workspaces.
+
+Replace these three files together in the GitHub Pages repository:
 - index.html
 - style.css
 - script.js
 
-This package combines:
-- Image -> PDF current rotation/live preview and completion-screen fixes
-- All Tools dropdown without hiding the remaining tools
-- Document Scanner workspace and scanner controls
-- Responsive desktop/mobile hardening
-- Existing homepage dark-mode toggle behavior
+Key fixes:
+- All Tools dropdown no longer filters or hides the main tool grid.
+- Selecting Document Scanner from All Tools opens the scanner directly.
+- Selecting Image → PDF opens the Image → PDF workspace directly.
+- Search is the only feature that filters the All Tools grid.
+- Tool cards and dropdown use the same navigation route.
+- Mobile responsive rules are retained for homepage, tool modal, PDF workspace and scanner.
+- Dark mode remains available.
 
-After upload: commit to main, wait for Pages deployment, then hard refresh (Ctrl+F5).
+After upload: commit to main, wait for GitHub Pages, then hard refresh (Ctrl+F5).
