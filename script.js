@@ -40,6 +40,101 @@ const clearImages=document.getElementById("clearImages");
 const pageSize=document.getElementById("pageSize");
 const orientation=document.getElementById("orientation");
 const margin=document.getElementById("margin");
+
+/* KwikToolForAll local PDF engine: no upload/server dependency. */
+function kwikMakePdf(pages){
+  const enc = new TextEncoder();
+  const chunks = [];
+  const offsets = [0];
+  let pos = 0;
+  const push = s => { const b = typeof s === "string" ? enc.encode(s) : s; chunks.push(b); pos += b.length; };
+
+  push("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+  const objects = [];
+  const addObj = body => { objects.push(body); return objects.length; };
+
+  const catalogId = addObj(null);
+  const pagesId = addObj(null);
+  const pageIds = [];
+  const contentIds = [];
+  const imageIds = [];
+
+  pages.forEach((p) => {
+    const imgId = addObj(null);
+    imageIds.push(imgId);
+    const contentId = addObj(null);
+    contentIds.push(contentId);
+    const pageId = addObj(null);
+    pageIds.push(pageId);
+  });
+
+  objects[catalogId-1] = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
+  objects[pagesId-1] = `<< /Type /Pages /Kids [${pageIds.map(id=>id+" 0 R").join(" ")}] /Count ${pageIds.length} >>`;
+
+  pages.forEach((p,i)=>{
+    const w = p.width, h = p.height;
+    objects[imageIds[i]-1] = {
+      dict:`<< /Type /XObject /Subtype /Image /Width ${p.imgWidth} /Height ${p.imgHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${p.jpeg.length} >>`,
+      stream:p.jpeg
+    };
+    const commands = `q\n${w} 0 0 ${h} 0 0 cm\n/Im0 Do\nQ\n`;
+    const cb = enc.encode(commands);
+    objects[contentIds[i]-1] = {
+      dict:`<< /Length ${cb.length} >>`,
+      stream:cb
+    };
+    objects[pageIds[i]-1] = `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im0 ${imageIds[i]} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`;
+  });
+
+  objects.forEach((obj,i)=>{
+    offsets[i+1]=pos;
+    push(`${i+1} 0 obj\n`);
+    if(typeof obj === "string"){
+      push(obj+"\nendobj\n");
+    }else{
+      push(obj.dict+"\nstream\n");
+      push(obj.stream);
+      push("\nendstream\nendobj\n");
+    }
+  });
+  const xref = pos;
+  push(`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`);
+  for(let i=1;i<=objects.length;i++) push(String(offsets[i]).padStart(10,"0")+" 00000 n \n");
+  push(`trailer\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(chunks,{type:"application/pdf"});
+}
+
+function kwikDataUrlToBytes(dataUrl){
+  const b64 = dataUrl.split(",")[1] || "";
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+
+function kwikImageToJpeg(item){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    img.onload=()=>{
+      try{
+        const rad=(item.rotation||0)*Math.PI/180;
+        const swap=Math.abs((item.rotation||0)%180)===90;
+        const cw=swap?img.height:img.width, ch=swap?img.width:img.height;
+        const canvas=document.createElement("canvas");
+        canvas.width=cw; canvas.height=ch;
+        const ctx=canvas.getContext("2d");
+        ctx.translate(cw/2,ch/2);
+        ctx.rotate(rad);
+        ctx.drawImage(img,-img.width/2,-img.height/2);
+        const data=canvas.toDataURL("image/jpeg",0.92);
+        resolve({jpeg:kwikDataUrlToBytes(data),imgWidth:cw,imgHeight:ch});
+      }catch(e){reject(e)}
+    };
+    img.onerror=()=>reject(new Error("Could not read image."));
+    img.src=item.url;
+  });
+}
+
 let pdfImages=[];
 
 function openImagePdf(){
@@ -106,44 +201,99 @@ async function fileToDataUrl(file){
  });
 }
 async function createImagePdf(){
- if(!pdfImages.length)return;
- if(!window.jspdf){showToast("PDF engine could not load. Check your internet connection and try again.");return}
- createPdf.disabled=true;pdfStatus.textContent="Creating PDF locally…";
- try{
-   const {jsPDF}=window.jspdf;
-   const size=pageSize.value, orient=orientation.value, m=Number(margin.value);
-   let doc=null;
-   for(let i=0;i<pdfImages.length;i++){
-     const item=pdfImages[i];
-     const data=await fileToDataUrl(item.file);
-     const img=await loadImage(data);
-     const rotated=(item.rotation/90)%2!==0;
-     let pageW,pageH,format;
-     if(size==="a4"){format="a4";pageW=210;pageH=297}
-     else if(size==="letter"){format="letter";pageW=215.9;pageH=279.4}
-     else {format="a4";pageW=210;pageH=297}
-     let want=orient;
-     if(want==="auto")want=(rotated||img.width>img.height)?"landscape":"portrait";
-     if(want==="landscape")[pageW,pageH]=[pageH,pageW];
-     if(i===0)doc=new jsPDF({orientation:want==="landscape"?"landscape":"portrait",unit:"mm",format});
-     else doc.addPage(format,want==="landscape"?"landscape":"portrait");
-     const availableW=pageW-m*2,availableH=pageH-m*2;
-     let iw=img.width,ih=img.height;
-     if(rotated)[iw,ih]=[ih,iw];
-     const scale=Math.min(availableW/iw,availableH/ih);
-     const w=iw*scale,h=ih*scale;
-     const x=m+(availableW-w)/2,y=m+(availableH-h)/2;
-     doc.addImage(data,item.file.type==="image/png"?"PNG":"JPEG",x,y,w,h,undefined,"FAST",item.rotation);
-   }
-   const stamp=new Date().toISOString().slice(0,10);
-   doc.save(`KwikToolForAll-images-${stamp}.pdf`);
-   pdfStatus.textContent="✓ PDF created and downloaded.";
-   showToast("✓ PDF created locally. Your images were not uploaded.");
- }catch(err){
-   console.error(err);pdfStatus.textContent="Could not create the PDF. Please try again.";
-   showToast("Something went wrong while creating the PDF.");
- }finally{createPdf.disabled=false}
+  const status=document.getElementById("pdfStatus");
+  const btn=document.getElementById("createPdf");
+  if(!pdfImages.length){
+    status.textContent="Add at least one image.";
+    return;
+  }
+
+  btn.disabled=true;
+  status.textContent="Creating PDF locally…";
+
+  try{
+    const pageSize=document.getElementById("pageSize").value;
+    const orientation=document.getElementById("orientation").value;
+    const marginMm=Number(document.getElementById("margin").value)||0;
+
+    const pages=[];
+    for(const item of pdfImages){
+      const info=await kwikImageToJpeg(item);
+      const iw=info.imgWidth, ih=info.imgHeight;
+
+      let pw,ph;
+      if(pageSize==="letter"){
+        pw=215.9; ph=279.4;
+      }else if(pageSize==="image"){
+        // Image-size mode: use the image's physical size at 96 CSS DPI.
+        pw=iw*25.4/96 + marginMm*2;
+        ph=ih*25.4/96 + marginMm*2;
+        pw=Math.max(25,pw); ph=Math.max(25,ph);
+      }else{
+        pw=210; ph=297;
+      }
+
+      const landscape = orientation==="landscape" ||
+        (orientation==="auto" && ((iw>ih && pageSize!=="image") || (pageSize==="image" && pw>ph)));
+      if(pageSize!=="image"){
+        if(landscape){ const t=pw; pw=ph; ph=t; }
+      }
+
+      const maxW=Math.max(1,pw-marginMm*2);
+      const maxH=Math.max(1,ph-marginMm*2);
+      const scale=Math.min(maxW/iw,maxH/ih);
+      const w=iw*scale, h=ih*scale;
+      const x=(pw-w)/2, y=(ph-h)/2;
+
+      // Render the image onto a white page-sized canvas so the PDF is simple
+      // and reliable across browsers/readers.
+      const pxPerMm=96/25.4;
+      const canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(pw*pxPerMm));
+      canvas.height=Math.max(1,Math.round(ph*pxPerMm));
+      const ctx=canvas.getContext("2d");
+      ctx.fillStyle="#ffffff";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      const img=new Image();
+      await new Promise((resolve,reject)=>{
+        img.onload=resolve; img.onerror=()=>reject(new Error("Could not render image."));
+        img.src=item.url;
+      });
+      ctx.drawImage(
+        img,
+        Math.round(x*pxPerMm), Math.round(y*pxPerMm),
+        Math.round(w*pxPerMm), Math.round(h*pxPerMm)
+      );
+      const jpeg=kwikDataUrlToBytes(canvas.toDataURL("image/jpeg",0.9));
+      pages.push({
+        width:pw*72/25.4,
+        height:ph*72/25.4,
+        imgWidth:canvas.width,
+        imgHeight:canvas.height,
+        jpeg
+      });
+    }
+
+    const blob=kwikMakePdf(pages);
+    const a=document.createElement("a");
+    const date=new Date().toISOString().slice(0,10);
+    a.href=URL.createObjectURL(blob);
+    a.download=`KwikToolForAll-images-${date}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+
+    status.textContent="✓ PDF created and downloaded.";
+  }catch(err){
+    console.error(err);
+    status.textContent="Could not create the PDF. Please try again with JPG or PNG images.";
+  }finally{
+    btn.disabled=false;
+  }
 }
+
 function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src})}
 createPdf.addEventListener("click",createImagePdf);
 

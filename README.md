@@ -29,3 +29,7 @@ The Image → PDF tool is now functional in the browser:
 - Client-side PDF creation with jsPDF
 - Automatic PDF download
 - No application server or file upload is used by this tool
+
+
+## Image → PDF v2
+PDF generation now uses a local browser-side PDF engine. The tool no longer depends on the external jsPDF CDN for PDF creation. Image-size mode is supported, and JPG/PNG images are rendered onto white PDF pages locally.
