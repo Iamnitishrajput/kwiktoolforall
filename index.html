@@ -182,57 +182,33 @@
       <small>Your images stay in this browser. PDF creation runs locally — no upload.</small>
     </div>
 
-    <div class="workspace-options">
-      <label>Default page size
-        <select id="pageSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select>
-      </label>
-      <label>Default orientation
-        <select id="orientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
-      </label>
-      <label>Default margin
-        <select id="margin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select>
-      </label>
-    </div>
-    <div class="apply-all-bar">
-      <div>
-        <strong>Apply settings to all pages</strong>
-        <span>Use the defaults above for every page.</span>
-      </div>
-      <button type="button" id="applyAllSettings" class="apply-all-btn">Apply to all</button>
-    </div>
-
     <div class="file-toolbar">
       <strong id="fileCount">0 images</strong>
       <button type="button" id="clearImages" class="text-btn">Clear all</button>
     </div>
-    <div class="pdf-pages-section">
+
+    <section class="pdf-pages-section" aria-label="Document pages">
       <div class="image-list-wrap">
         <div class="image-list-head">
           <div>
             <span class="preview-kicker">DOCUMENT PAGES</span>
             <strong>Pages</strong>
           </div>
-          <span id="previewPageCount">0 pages</span>
+          <div class="document-pages-actions">
+            <span id="previewPageCount">0 pages</span>
+            <button type="button" id="selectAllPages" class="pages-action-btn">Select all</button>
+          </div>
+        </div>
+        <div class="bulk-settings" id="bulkSettings" hidden>
+          <strong id="selectedCount">0 selected</strong>
+          <label>Size<select id="bulkSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select></label>
+          <label>Orientation<select id="bulkOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+          <label>Margin<select id="bulkMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select></label>
+          <button type="button" id="applySelected" class="apply-selected-btn">Apply to selected</button>
         </div>
         <div class="image-list" id="imageList"></div>
       </div>
-
-      <div class="pdf-preview-panel">
-        <div class="preview-head">
-          <div>
-            <span class="preview-kicker">LIVE PREVIEW</span>
-            <strong id="previewTitle">Selected page</strong>
-          </div>
-          <span>Updates instantly</span>
-        </div>
-        <div class="pdf-preview-stage" id="pdfPreviewStage">
-          <div class="preview-empty" id="previewEmpty">
-            <span>PDF</span>
-            <p>Add an image to see the live PDF preview</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
 
     <div class="workspace-footer" id="pdfWorkspaceFooter">
       <span id="pdfStatus">Add images to get started.</span>

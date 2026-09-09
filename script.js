@@ -1,121 +1,134 @@
 const tools=[
-{id:"image-pdf",name:"Image → PDF",desc:"Convert JPG or PNG images into a clean PDF document.",icon:"▧",color:"red",keys:"image pdf convert"},
-{id:"ocr",name:"Image → Text",desc:"Extract readable text from images and screenshots.",icon:"Aa",color:"blue",keys:"image text ocr"},
-{id:"merge",name:"Merge PDF",desc:"Combine multiple PDF files into one document.",icon:"▤",color:"green",keys:"merge pdf"},
-{id:"split",name:"Split PDF",desc:"Separate pages or ranges from a PDF file.",icon:"✂",color:"orange",keys:"split pdf"},
-{id:"compress-pdf",name:"Compress PDF",desc:"Reduce PDF file size for easier sharing.",icon:"↘",color:"purple",keys:"compress pdf"},
-{id:"pdf-image",name:"PDF → JPG / PNG",desc:"Convert PDF pages into image files.",icon:"▥",color:"teal",keys:"pdf jpg png convert"},
-{id:"scanner",name:"Document Scanner",desc:"Scan and clean documents with your camera.",icon:"▤",color:"blue",keys:"document scanner scan"},
-{id:"compress-image",name:"Compress Image",desc:"Reduce image size for email and sharing.",icon:"⌁",color:"green",keys:"compress image"},
-{id:"jpg-png",name:"JPG ↔ PNG",desc:"Switch between common image formats.",icon:"⇄",color:"orange",keys:"jpg png image convert"},
-{id:"share",name:"Share & Send",desc:"Share files with temporary processing and delivery.",icon:"↥",color:"purple",keys:"share send temporary"}
+{id:'image-pdf',name:'Image → PDF',desc:'Convert JPG or PNG images into a clean PDF document.',icon:'▧',color:'red',keys:'image pdf convert'},
+{id:'ocr',name:'Image → Text',desc:'Extract readable text from images and screenshots.',icon:'Aa',color:'blue',keys:'image text ocr'},
+{id:'merge',name:'Merge PDF',desc:'Combine multiple PDF files into one document.',icon:'▤',color:'green',keys:'merge pdf'},
+{id:'split',name:'Split PDF',desc:'Separate pages or ranges from a PDF file.',icon:'✂',color:'orange',keys:'split pdf'},
+{id:'compress-pdf',name:'Compress PDF',desc:'Reduce PDF file size for easier sharing.',icon:'↘',color:'purple',keys:'compress pdf'},
+{id:'pdf-image',name:'PDF → JPG / PNG',desc:'Convert PDF pages into image files.',icon:'▥',color:'teal',keys:'pdf jpg png convert'},
+{id:'scanner',name:'Document Scanner',desc:'Scan and clean documents with your camera.',icon:'▤',color:'blue',keys:'document scanner scan'},
+{id:'compress-image',name:'Compress Image',desc:'Reduce image size for email and sharing.',icon:'⌁',color:'green',keys:'compress image'},
+{id:'jpg-png',name:'JPG ↔ PNG',desc:'Switch between common image formats.',icon:'⇄',color:'orange',keys:'jpg png image convert'},
+{id:'share',name:'Share & Send',desc:'Share files with temporary processing and delivery.',icon:'↥',color:'purple',keys:'share send temporary'}
 ];
-const popular=tools.slice(0,6),grid=document.getElementById("toolGrid"),search=document.getElementById("toolSearch"),empty=document.getElementById("emptyState"),toast=document.getElementById("toast");
-function showToast(msg){toast.textContent=msg;toast.classList.add("show");clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>toast.classList.remove("show"),2600)}
-function render(q=""){
- const term=q.trim().toLowerCase();
- const list=(term?tools:popular).filter(t=>!term||`${t.name} ${t.desc} ${t.keys}`.toLowerCase().includes(term));
- grid.innerHTML=list.map(t=>`<article class="tool-card"><div class="tool-icon ${t.color}">${t.icon}</div><h3>${t.name}</h3><p>${t.desc}</p><button class="open-tool ${t.color}" data-open="${t.id}">Open tool →</button></article>`).join("");
- empty.hidden=list.length>0;
- grid.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openTool(b.dataset.open)));
-}
-function openTool(id){
- const tool=tools.find(t=>t.id===id);
- if(!tool)return;
- if(id==="image-pdf"){ openImagePdf(); return; }
- search.value=tool.name;
- render(tool.name);
- document.getElementById("tools").scrollIntoView({behavior:"smooth",block:"start"});
- showToast(`${tool.name} is selected. Its processing engine is coming next.`);
-}
+const $=id=>document.getElementById(id), grid=$('toolGrid'), search=$('toolSearch'), empty=$('emptyState'), toast=$('toast');
+function showToast(msg){if(!toast)return;toast.textContent=msg;toast.classList.add('show');clearTimeout(window.__kwikToast);window.__kwikToast=setTimeout(()=>toast.classList.remove('show'),2600)}
+function render(q=''){const term=q.trim().toLowerCase();const list=(term?tools:tools.slice(0,6)).filter(t=>!term||`${t.name} ${t.desc} ${t.keys}`.toLowerCase().includes(term));grid.innerHTML=list.map(t=>`<article class="tool-card"><div class="tool-icon ${t.color}">${t.icon}</div><h3>${t.name}</h3><p>${t.desc}</p><button class="open-tool ${t.color}" data-open="${t.id}">Open tool →</button></article>`).join('');empty.hidden=list.length>0;grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openTool(b.dataset.open))}
+function openTool(id){const t=tools.find(x=>x.id===id);if(!t)return;if(id==='image-pdf'){openImagePdf();return}search.value=t.name;render(t.name);$('tools').scrollIntoView({behavior:'smooth',block:'start'});showToast(`${t.name} is selected. Its processing engine is coming next.`)}
 
-const toolModal=document.getElementById("toolModal");
-const imageFiles=document.getElementById("imageFiles");
-const uploadZone=document.getElementById("uploadZone");
-const fileCount=document.getElementById("fileCount");
-const createPdf=document.getElementById("createPdf");
-const pdfStatus=document.getElementById("pdfStatus");
-const clearImages=document.getElementById("clearImages");
-const pageSize=document.getElementById("pageSize");
-const orientation=document.getElementById("orientation");
-const margin=document.getElementById("margin");
-
-let pdfImages=[];
-let selectedSet=new Set();
-let selectedPage=0;
-let previewOpen=false;
-
-/* Only the Image → PDF workspace is implemented here. All processing is local. */
-const injectedStyle=document.createElement("style");
-injectedStyle.textContent=`
-.pdf-preview-panel{display:none!important}
-.kwik-pages-shell{margin-top:18px;border:1px solid var(--line,#dce5f0);border-radius:16px;background:#fff;overflow:hidden}
-.kwik-pages-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line,#dce5f0);gap:12px}
-.kwik-pages-head .kph-title{display:flex;align-items:center;gap:10px}.kwik-pages-head .kph-title span{font-size:10px;letter-spacing:1.8px;font-weight:900;color:#71809a}.kwik-pages-head .kph-title strong{font-size:15px}
-.kwik-pages-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.kwik-pages-actions button,.kwik-bulk button{border:1px solid #d6e0eb;background:#fff;color:#26364f;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:800}.kwik-pages-actions button:hover,.kwik-bulk button:hover{background:#f5f8fc}
-.kwik-bulk{display:none;padding:12px 14px;background:#f6f9fd;border-bottom:1px solid var(--line,#dce5f0);gap:8px;align-items:center;flex-wrap:wrap}.kwik-bulk.show{display:flex}.kwik-bulk strong{font-size:11px;margin-right:4px}.kwik-bulk select{height:34px;border:1px solid #d5dfeb;border-radius:8px;background:#fff;padding:0 9px;font-size:11px}.kwik-bulk .apply{background:#101a31;color:#fff;border-color:#101a31}
-.kwik-page-list{padding:10px;display:grid;gap:8px;max-height:340px;overflow:auto}.kwik-page-row{display:grid;grid-template-columns:22px 62px minmax(120px,1fr) auto;gap:11px;align-items:center;border:1px solid #e0e7f0;border-radius:12px;padding:8px;background:#fff;transition:.16s}.kwik-page-row:hover{border-color:#c5d3e3;box-shadow:0 5px 16px rgba(20,53,92,.06)}.kwik-page-row.active{border-color:#7b91ff;box-shadow:0 0 0 2px rgba(91,111,255,.10)}
-.kwik-page-check{width:16px;height:16px;accent-color:#5b6fff}.kwik-thumb{width:62px;height:76px;object-fit:contain;background:#f4f6f9;border:1px solid #e1e6ed;border-radius:7px;cursor:pointer;padding:2px}.kwik-page-meta{min-width:0}.kwik-page-meta strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kwik-page-meta small{display:block;color:#7a879a;font-size:9px;margin-top:2px}.kwik-page-settings{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.kwik-page-settings label{font-size:9px;color:#77859a;display:flex;align-items:center;gap:4px}.kwik-page-settings select{height:30px;border:1px solid #d8e1ec;border-radius:7px;background:#fff;padding:0 6px;font-size:10px}.kwik-icon-btn{width:30px;height:30px;padding:0!important;display:grid;place-items:center;border:1px solid #d8e1ec!important;border-radius:8px!important;background:#fff!important;font-size:14px!important}.kwik-icon-btn.danger{color:#d72d4d}
-.kwik-empty{padding:34px 18px;text-align:center;color:#7b899d}.kwik-empty strong{display:block;color:#33415a;font-size:12px;margin-bottom:4px}.kwik-empty span{font-size:10px}
-.kwik-preview-modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:24px}.kwik-preview-modal.open{display:flex}.kwik-preview-backdrop{position:absolute;inset:0;background:rgba(7,17,35,.72);backdrop-filter:blur(5px)}.kwik-preview-card{position:relative;z-index:2;width:min(940px,96vw);max-height:92vh;background:#fff;border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column}.kwik-preview-head{padding:15px 18px;border-bottom:1px solid #e1e7ef;display:flex;justify-content:space-between;align-items:center;gap:12px}.kwik-preview-head strong{font-size:14px}.kwik-preview-close{border:0;background:#f0f3f7;border-radius:9px;width:34px;height:34px;font-size:21px}.kwik-preview-body{display:grid;grid-template-columns:minmax(0,1fr) 220px;min-height:520px}.kwik-preview-stage{background:#eef2f6;display:grid;place-items:center;padding:24px;overflow:auto}.kwik-paper{position:relative;background:#fff;box-shadow:0 16px 35px rgba(20,35,60,.18);overflow:hidden;display:grid;place-items:center}.kwik-paper img{display:block;object-fit:contain;max-width:100%;max-height:100%}.kwik-preview-controls{border-left:1px solid #e1e7ef;padding:18px;display:flex;flex-direction:column;gap:12px}.kwik-preview-controls label{font-size:10px;font-weight:800;color:#65748b}.kwik-preview-controls select{display:block;width:100%;height:36px;margin-top:5px;border:1px solid #d7e0ea;border-radius:8px;padding:0 8px;font-size:11px;background:#fff}.kwik-preview-controls button{height:36px;border:1px solid #d7e0ea;border-radius:8px;background:#fff;font-size:11px;font-weight:800}.kwik-preview-controls .primary{background:#101a31;color:#fff;border-color:#101a31}.kwik-preview-hint{font-size:9px;color:#8490a2;line-height:1.45;margin-top:auto}
-.kwik-success{display:none;text-align:center;padding:42px 24px 48px}.kwik-success.show{display:block}.kwik-success-icon{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px;background:#e2f8ee;color:#0a9c62;font-size:28px;font-weight:900}.kwik-success h3{font-size:23px;margin:0 0 7px}.kwik-success p{font-size:12px;color:#687790;margin:0 auto 18px;max-width:470px}.kwik-success .privacy{font-size:10px;color:#16865b;background:#effaf5;border:1px solid #d8eee3;border-radius:11px;padding:11px 14px;display:inline-block;margin-bottom:18px}.kwik-success .privacy span{color:#60796d}.kwik-success button{border:0;background:#101a31;color:#fff;border-radius:10px;padding:11px 17px;font-size:11px;font-weight:800}.kwik-hidden-workspace{display:none!important}
-@media(max-width:760px){.kwik-page-row{grid-template-columns:20px 55px 1fr}.kwik-page-settings{grid-column:2/-1;justify-content:flex-start}.kwik-preview-body{grid-template-columns:1fr}.kwik-preview-controls{border-left:0;border-top:1px solid #e1e7ef}.kwik-preview-stage{min-height:360px}.kwik-preview-modal{padding:10px}}
-`;
-document.head.appendChild(injectedStyle);
-
-function formatBytes(n){if(n<1024)return `${n} B`;if(n<1048576)return `${(n/1024).toFixed(1)} KB`;return `${(n/1048576).toFixed(1)} MB`}
+const toolModal=$('toolModal'),imageFiles=$('imageFiles'),uploadZone=$('uploadZone'),imageList=$('imageList'),fileCount=$('fileCount'),createPdf=$('createPdf'),pdfStatus=$('pdfStatus'),clearImages=$('clearImages');
+const pdfSuccess=$('pdfSuccess'),workspaceHead=document.querySelector('.workspace-head'),upload=$('uploadZone'),pagesSection=document.querySelector('.pdf-pages-section'),footer=$('pdfWorkspaceFooter');
+const selectAll=$('selectAllPages'),bulkSettings=$('bulkSettings'),selectedCount=$('selectedCount'),bulkSize=$('bulkSize'),bulkOrientation=$('bulkOrientation'),bulkMargin=$('bulkMargin'),applySelected=$('applySelected'),pageCount=$('previewPageCount'),reuse=$('reusePdfTool');
+let pdfImages=[],selected=new Set(),selectedPage=0,previewModal=null;
 function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function resetSuccess(){document.querySelectorAll('.workspace-head,.upload-zone,.workspace-options,.apply-all-bar,.file-toolbar,.kwik-pages-shell').forEach(x=>x?.classList.remove('kwik-hidden-workspace'));document.getElementById('kwikSuccess')?.classList.remove('show')}
-function ensureWorkspace(){
-  document.querySelector('.pdf-preview-panel')?.setAttribute('hidden','');
-  let shell=document.querySelector('.kwik-pages-shell');
-  if(!shell){
-    shell=document.createElement('div');shell.className='kwik-pages-shell';
-    shell.innerHTML=`<div class="kwik-pages-head"><div class="kph-title"><span>DOCUMENT PAGES</span><strong id="kwikPagesCount">0 pages</strong></div><div class="kwik-pages-actions"><button type="button" id="kwikSelectAll">Select all</button><button type="button" id="kwikClearSelection">Clear selection</button></div></div><div class="kwik-bulk" id="kwikBulk"><strong id="kwikSelectedText">0 selected</strong><select id="kwikBulkSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select><select id="kwikBulkOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select><select id="kwikBulkMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select><button class="apply" type="button" id="kwikApplyBulk">Apply to selected</button></div><div class="kwik-page-list" id="kwikPageList"></div>`;
-    const anchor=document.querySelector('.file-toolbar');anchor?.parentNode.insertBefore(shell,anchor.nextSibling);
-    document.getElementById('kwikSelectAll').onclick=()=>{pdfImages.forEach((_,i)=>selectedSet.add(i));renderPdfImages()};
-    document.getElementById('kwikClearSelection').onclick=()=>{selectedSet.clear();renderPdfImages()};
-    document.getElementById('kwikApplyBulk').onclick=applyBulk;
-  }
-  ensureSuccessPanel();
-}
-function ensureSuccessPanel(){if(document.getElementById('kwikSuccess'))return;const s=document.createElement('div');s.className='kwik-success';s.id='kwikSuccess';s.innerHTML=`<div class="kwik-success-icon">✓</div><h3>Thank you for using KwikToolForAll.</h3><p>Your PDF is now downloaded. Please check your Downloads folder.</p><div class="privacy">✓ Your privacy is protected<br><span>Your images were processed locally in your browser. Nothing was uploaded to our servers, and the temporary workspace has been cleared.</span></div><br><button type="button" id="kwikReuse">Re-use the tool</button>`;document.querySelector('.tool-workspace')?.appendChild(s);document.getElementById('kwikReuse').onclick=()=>{resetPdfWorkspace();resetSuccess()}}
-function showSuccess(){document.querySelectorAll('.workspace-head,.upload-zone,.workspace-options,.apply-all-bar,.file-toolbar,.kwik-pages-shell').forEach(x=>x?.classList.add('kwik-hidden-workspace'));document.getElementById('kwikSuccess')?.classList.add('show')}
-function resetPdfWorkspace(){pdfImages.forEach(x=>{try{URL.revokeObjectURL(x.url)}catch(e){}});pdfImages=[];selectedSet.clear();selectedPage=0;if(imageFiles)imageFiles.value='';closePreview();if(fileCount)fileCount.textContent='0 images';if(pdfStatus)pdfStatus.textContent='Add images to get started.';if(createPdf)createPdf.disabled=true;renderPdfImages()}
-function addFiles(files){const valid=files.filter(f=>/^(image\/jpeg|image\/png)$/i.test(f.type));if(valid.length<files.length)showToast('Only JPG and PNG images are supported.');valid.forEach(file=>{const item={file,url:URL.createObjectURL(file),rotation:0,naturalWidth:0,naturalHeight:0,pageSize:pageSize.value,orientation:orientation.value,margin:Number(margin.value)||0};pdfImages.push(item);captureNaturalSize(item)});renderPdfImages()}
-function captureNaturalSize(item){return new Promise(resolve=>{const img=new Image();img.onload=()=>{item.naturalWidth=img.naturalWidth;item.naturalHeight=img.naturalHeight;renderPdfImages();resolve()};img.onerror=resolve;img.src=item.url})}
+function formatBytes(n){if(n<1024)return `${n} B`;if(n<1048576)return `${(n/1024).toFixed(1)} KB`;return `${(n/1048576).toFixed(1)} MB`}
+function resetSuccess(){pdfSuccess.hidden=true;pdfSuccess.classList.remove('is-visible');[workspaceHead,upload,pagesSection,footer].forEach(x=>x&&x.classList.remove('tool-hidden'));clearImages.disabled=false;createPdf.disabled=pdfImages.length===0}
+function showSuccess(){[workspaceHead,upload,pagesSection,footer].forEach(x=>x&&x.classList.add('tool-hidden'));pdfSuccess.hidden=false;requestAnimationFrame(()=>pdfSuccess.classList.add('is-visible'))}
+function clearWorkspace(){pdfImages.forEach(x=>URL.revokeObjectURL(x.url));pdfImages=[];selected.clear();selectedPage=0;if(imageFiles)imageFiles.value='';closePreview();renderPdfImages();pdfStatus.textContent='Add images to get started.'}
+function openImagePdf(){resetSuccess();toolModal.classList.add('open');toolModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';renderPdfImages();setTimeout(()=>imageFiles.focus(),80)}
+function closeImagePdf(){toolModal.classList.remove('open');toolModal.setAttribute('aria-hidden','true');document.body.style.overflow='';closePreview()}
+$('closeTool').onclick=closeImagePdf;document.querySelector('[data-close-tool]').onclick=closeImagePdf;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(previewModal?.classList.contains('open'))closePreview();else if(toolModal.classList.contains('open'))closeImagePdf()}});
+imageFiles.addEventListener('change',e=>addFiles([...e.target.files]));
+['dragenter','dragover'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add('dragover')}));
+['dragleave','drop'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.remove('dragover')}));
+uploadZone.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
+uploadZone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();imageFiles.click()}});
+clearImages.onclick=clearWorkspace;
+selectAll.onclick=()=>{if(!pdfImages.length)return;if(selected.size===pdfImages.length)selected.clear();else pdfImages.forEach((_,i)=>selected.add(i));renderPdfImages()};
+applySelected.onclick=()=>{const n=selected.size;if(!n)return;selected.forEach(i=>{pdfImages[i].pageSize=bulkSize.value;pdfImages[i].orientation=bulkOrientation.value;pdfImages[i].margin=Number(bulkMargin.value)});renderPdfImages();showToast(`Applied settings to ${n} selected page${n===1?'':'s'}.`)};
+reuse.onclick=()=>{clearWorkspace();resetSuccess();showToast('Workspace cleared. You can start again.')};
+function addFiles(files){const valid=files.filter(f=>/^(image\/jpeg|image\/png)$/i.test(f.type));if(valid.length<files.length)showToast('Only JPG and PNG images are supported.');valid.forEach(file=>{const item={file,url:URL.createObjectURL(file),rotation:0,naturalWidth:0,naturalHeight:0,pageSize:'a4',orientation:'auto',margin:10};pdfImages.push(item);loadNaturalSize(item)});renderPdfImages()}
+function loadNaturalSize(item){const img=new Image();img.onload=()=>{item.naturalWidth=img.naturalWidth;item.naturalHeight=img.naturalHeight;renderPdfImages()};img.src=item.url}
 function getSpec(item){const iw=item.naturalWidth||1000,ih=item.naturalHeight||1400,mm=Number(item.margin)||0;let pw=210,ph=297;if(item.pageSize==='letter'){pw=215.9;ph=279.4}if(item.pageSize==='image'){pw=Math.max(25,iw*25.4/96+mm*2);ph=Math.max(25,ih*25.4/96+mm*2)}if(item.orientation==='landscape'&&ph>pw)[pw,ph]=[ph,pw];if(item.orientation==='portrait'&&pw>ph)[pw,ph]=[ph,pw];if(item.orientation==='auto'&&item.pageSize!=='image'&&iw>ih)[pw,ph]=[ph,pw];return{pw,ph,iw,ih,mm}}
-function renderPdfImages(){ensureWorkspace();fileCount.textContent=`${pdfImages.length} image${pdfImages.length===1?'':'s'}`;createPdf.disabled=!pdfImages.length;pdfStatus.textContent=pdfImages.length?`${pdfImages.length} image${pdfImages.length===1?'':'s'} ready.`:'Add images to get started.';const list=document.getElementById('kwikPageList');if(!list)return;document.getElementById('kwikPagesCount').textContent=`${pdfImages.length} page${pdfImages.length===1?'':'s'}`;selectedSet=new Set([...selectedSet].filter(i=>i>=0&&i<pdfImages.length));document.getElementById('kwikSelectedText').textContent=`${selectedSet.size} selected`;document.getElementById('kwikBulk').classList.toggle('show',selectedSet.size>0);if(!pdfImages.length){list.innerHTML='<div class="kwik-empty"><strong>No images added yet</strong><span>Add JPG or PNG files above to build your document.</span></div>';return}list.innerHTML=pdfImages.map((item,i)=>`<div class="kwik-page-row ${i===selectedPage?'active':''}"><input class="kwik-page-check" type="checkbox" ${selectedSet.has(i)?'checked':''} data-select="${i}" aria-label="Select page ${i+1}"><img class="kwik-thumb" src="${item.url}" data-preview="${i}" alt="Page ${i+1}"><div class="kwik-page-meta"><strong>Page ${i+1} · ${escapeHtml(item.file.name)}</strong><small>${formatBytes(item.file.size)} · ${item.pageSize==='image'?'Image size':item.pageSize.toUpperCase()} · ${item.orientation} · ${item.margin} mm margin</small></div><div class="kwik-page-settings"><label>Size<select data-setting="size" data-index="${i}"><option value="a4" ${item.pageSize==='a4'?'selected':''}>A4</option><option value="letter" ${item.pageSize==='letter'?'selected':''}>Letter</option><option value="image" ${item.pageSize==='image'?'selected':''}>Image</option></select></label><label>Orientation<select data-setting="orientation" data-index="${i}"><option value="auto" ${item.orientation==='auto'?'selected':''}>Auto</option><option value="portrait" ${item.orientation==='portrait'?'selected':''}>Portrait</option><option value="landscape" ${item.orientation==='landscape'?'selected':''}>Landscape</select></label><label>Margin<select data-setting="margin" data-index="${i}"><option value="10" ${item.margin===10?'selected':''}>10</option><option value="5" ${item.margin===5?'selected':''}>5</option><option value="0" ${item.margin===0?'selected':''}>0</option></select></label><button class="kwik-icon-btn" data-action="up" data-index="${i}" ${i===0?'disabled':''}>↑</button><button class="kwik-icon-btn" data-action="down" data-index="${i}" ${i===pdfImages.length-1?'disabled':''}>↓</button><button class="kwik-icon-btn" data-action="rotate" data-index="${i}">↻</button><button class="kwik-icon-btn danger" data-action="remove" data-index="${i}">×</button></div></div>`).join('');list.querySelectorAll('[data-preview]').forEach(x=>x.onclick=()=>openPreview(Number(x.dataset.preview)));list.querySelectorAll('[data-select]').forEach(x=>x.onchange=()=>{const i=Number(x.dataset.select);x.checked?selectedSet.add(i):selectedSet.delete(i);selectedPage=i;renderPdfImages()});list.querySelectorAll('[data-setting]').forEach(x=>x.onchange=()=>{const i=Number(x.dataset.index),k=x.dataset.setting;pdfImages[i][k==='size'?'pageSize':k]=k==='margin'?Number(x.value):x.value;selectedPage=i;renderPdfImages()});list.querySelectorAll('[data-action]').forEach(x=>x.onclick=()=>pageAction(x.dataset.action,Number(x.dataset.index)))}
-function pageAction(action,i){if(action==='remove'){URL.revokeObjectURL(pdfImages[i].url);pdfImages.splice(i,1);selectedSet=new Set([...selectedSet].filter(x=>x!==i).map(x=>x>i?x-1:x));selectedPage=Math.min(selectedPage,Math.max(0,pdfImages.length-1))}else if(action==='up'&&i>0){[pdfImages[i-1],pdfImages[i]]=[pdfImages[i],pdfImages[i-1]];remapSelection(i,i-1);selectedPage=i-1}else if(action==='down'&&i<pdfImages.length-1){[pdfImages[i+1],pdfImages[i]]=[pdfImages[i],pdfImages[i+1]];remapSelection(i,i+1);selectedPage=i+1}else if(action==='rotate'){pdfImages[i].rotation=(pdfImages[i].rotation+90)%360;selectedPage=i}renderPdfImages()}
-function remapSelection(a,b){const next=new Set();selectedSet.forEach(x=>next.add(x===a?b:x===b?a:x));selectedSet=next}
-function applyBulk(){const size=document.getElementById('kwikBulkSize').value,ori=document.getElementById('kwikBulkOrientation').value,mar=Number(document.getElementById('kwikBulkMargin').value);const n=selectedSet.size;selectedSet.forEach(i=>{pdfImages[i].pageSize=size;pdfImages[i].orientation=ori;pdfImages[i].margin=mar});renderPdfImages();showToast(`Applied settings to ${n} selected page${n===1?'':'s'}.`)}
-function openPreview(i){selectedPage=i;let modal=document.getElementById('kwikPreviewModal');if(!modal){modal=document.createElement('div');modal.className='kwik-preview-modal';modal.id='kwikPreviewModal';modal.innerHTML=`<div class="kwik-preview-backdrop"></div><div class="kwik-preview-card" role="dialog" aria-modal="true"><div class="kwik-preview-head"><strong id="kwikPreviewTitle">Live page preview</strong><button class="kwik-preview-close" id="kwikPreviewClose">×</button></div><div class="kwik-preview-body"><div class="kwik-preview-stage" id="kwikPreviewStage"></div><div class="kwik-preview-controls"><label>Page size<select id="kwikPreviewSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select></label><label>Orientation<select id="kwikPreviewOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label><label>Margin<select id="kwikPreviewMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select></label><button id="kwikPreviewRotate">↻ Rotate image</button><button class="primary" id="kwikPreviewDone">Done</button><div class="kwik-preview-hint">Changes are saved to this page immediately.</div></div></div></div>`;document.body.appendChild(modal);document.getElementById('kwikPreviewClose').onclick=closePreview;document.getElementById('kwikPreviewDone').onclick=closePreview;modal.querySelector('.kwik-preview-backdrop').onclick=closePreview;document.getElementById('kwikPreviewSize').onchange=e=>{pdfImages[selectedPage].pageSize=e.target.value;renderPreview();renderPdfImages()};document.getElementById('kwikPreviewOrientation').onchange=e=>{pdfImages[selectedPage].orientation=e.target.value;renderPreview();renderPdfImages()};document.getElementById('kwikPreviewMargin').onchange=e=>{pdfImages[selectedPage].margin=Number(e.target.value);renderPreview();renderPdfImages()};document.getElementById('kwikPreviewRotate').onclick=()=>{pdfImages[selectedPage].rotation=(pdfImages[selectedPage].rotation+90)%360;renderPreview();renderPdfImages()}}modal.classList.add('open');previewOpen=true;document.body.style.overflow='hidden';renderPreview()}
-function renderPreview(){const item=pdfImages[selectedPage];if(!item)return;const s=getSpec(item),stage=document.getElementById('kwikPreviewStage');if(!stage)return;document.getElementById('kwikPreviewTitle').textContent=`Page ${selectedPage+1} of ${pdfImages.length} · Live preview`;document.getElementById('kwikPreviewSize').value=item.pageSize;document.getElementById('kwikPreviewOrientation').value=item.orientation;document.getElementById('kwikPreviewMargin').value=String(item.margin);stage.innerHTML='';const maxW=Math.max(220,stage.clientWidth-48),maxH=Math.max(300,stage.clientHeight-48),scale=Math.min(maxW/s.pw,maxH/s.ph);const paper=document.createElement('div');paper.className='kwik-paper';paper.style.width=`${s.pw*scale}px`;paper.style.height=`${s.ph*scale}px`;const img=document.createElement('img');img.src=item.url;const fit=Math.min((s.pw-s.mm*2)/s.iw,(s.ph-s.mm*2)/s.ih);img.style.width=`${Math.max(1,s.iw*fit*scale)}px`;img.style.height=`${Math.max(1,s.ih*fit*scale)}px`;img.style.transform=`rotate(${item.rotation}deg)`;paper.appendChild(img);stage.appendChild(paper)}
-function closePreview(){document.getElementById('kwikPreviewModal')?.classList.remove('open');previewOpen=false;if(toolModal?.classList.contains('open'))document.body.style.overflow='hidden'}
-async function createImagePdf(){if(!pdfImages.length)return;createPdf.disabled=true;pdfStatus.textContent='Creating your PDF…';try{const enc=new TextEncoder(),chunks=[],offsets=[0];let pos=0;const push=s=>{const b=typeof s==='string'?enc.encode(s):s;chunks.push(b);pos+=b.length};push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');const objs=[],add=x=>{objs.push(x);return objs.length},catalog=add(null),pagesId=add(null),pids=[],cids=[],iids=[];for(const item of pdfImages){const s=getSpec(item),img=await new Promise((res,rej)=>{const x=new Image();x.onload=()=>res(x);x.onerror=rej;x.src=item.url});const pt=72/25.4,w=Math.max(1,Math.round(s.pw*pt)),h=Math.max(1,Math.round(s.ph*pt)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);const fit=Math.min((s.pw-s.mm*2)/s.iw,(s.ph-s.mm*2)/s.ih),dw=s.iw*fit*pt,dh=s.ih*fit*pt;ctx.save();ctx.translate(w/2,h/2);ctx.rotate(item.rotation*Math.PI/180);ctx.drawImage(img,-dw/2,-dh/2,dw,dh);ctx.restore();const b64=canvas.toDataURL('image/jpeg',.92).split(',')[1],bin=atob(b64),jpeg=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)jpeg[j]=bin.charCodeAt(j);iids.push(add({dict:`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>`,stream:jpeg}));const cb=enc.encode(`q\n${w} 0 0 ${h} 0 0 cm\n/Im0 Do\nQ\n`);cids.push(add({dict:`<< /Length ${cb.length} >>`,stream:cb}));pids.push(add(null))}objs[catalog-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;objs[pagesId-1]=`<< /Type /Pages /Kids [${pids.map(x=>x+' 0 R').join(' ')}] /Count ${pids.length} >>`;for(let i=0;i<pids.length;i++){const d=objs[iids[i]-1].dict,ww=d.match(/\/Width (\d+)/)[1],hh=d.match(/\/Height (\d+)/)[1];objs[pids[i]-1]=`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${ww} ${hh}] /Resources << /XObject << /Im0 ${iids[i]} 0 R >> >> /Contents ${cids[i]} 0 R >>`}objs.forEach((o,i)=>{offsets[i+1]=pos;push(`${i+1} 0 obj\n`);if(typeof o==='string')push(o+'\nendobj\n');else{push(o.dict+'\nstream\n');push(o.stream);push('\nendstream\nendobj\n')}});const xref=pos;push(`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`);for(let i=1;i<=objs.length;i++)push(String(offsets[i]).padStart(10,'0')+' 00000 n \n');push(`trailer\n<< /Size ${objs.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`);const blob=new Blob(chunks,{type:'application/pdf'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`KwikToolForAll-images-${new Date().toISOString().slice(0,10)}.pdf`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);resetPdfWorkspace();showSuccess()}catch(err){console.error(err);pdfStatus.textContent='Could not create the PDF. Please try again with JPG or PNG images.';createPdf.disabled=false}}
-function openImagePdf(){resetSuccess();ensureWorkspace();toolModal.classList.add('open');toolModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';renderPdfImages()}
-function closeImagePdf(){closePreview();toolModal.classList.remove('open');toolModal.setAttribute('aria-hidden','true');document.body.style.overflow=''}
+function renderPdfImages(){
+  if(!imageList)return;
+  fileCount.textContent=`${pdfImages.length} image${pdfImages.length===1?'':'s'}`;
+  createPdf.disabled=pdfImages.length===0;
+  pdfStatus.textContent=pdfImages.length?`${pdfImages.length} image${pdfImages.length===1?'':'s'} ready.`:'Add images to get started.';
+  pageCount.textContent=`${pdfImages.length} page${pdfImages.length===1?'':'s'}`;
+  selected=new Set([...selected].filter(i=>i>=0&&i<pdfImages.length));
+  selectedCount.textContent=`${selected.size} selected`;
+  bulkSettings.hidden=selected.size===0;
+  selectAll.textContent=pdfImages.length&&selected.size===pdfImages.length?'Clear all':'Select all';
+  if(!pdfImages.length){imageList.innerHTML='<div class="pages-empty">Add images above to build your document.</div>';return}
 
-document.getElementById('closeTool')?.addEventListener('click',closeImagePdf);document.querySelector('[data-close-tool]')?.addEventListener('click',closeImagePdf);document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(previewOpen)closePreview();else if(toolModal.classList.contains('open'))closeImagePdf()}});imageFiles?.addEventListener('change',e=>addFiles([...e.target.files]));['dragenter','dragover'].forEach(ev=>uploadZone?.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add('dragover')}));['dragleave','drop'].forEach(ev=>uploadZone?.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.remove('dragover')}));uploadZone?.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));uploadZone?.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();imageFiles?.click()}});clearImages?.addEventListener('click',resetPdfWorkspace);document.getElementById('applyAllSettings')?.addEventListener('click',()=>{pdfImages.forEach(x=>{x.pageSize=pageSize.value;x.orientation=orientation.value;x.margin=Number(margin.value)});renderPdfImages();showToast('Settings applied to all pages.')});createPdf?.addEventListener('click',createImagePdf);
-function runSearch(q){search.value=q;render(q);document.getElementById("tools").scrollIntoView({behavior:"smooth",block:"start"})}
-document.getElementById("searchForm").addEventListener("submit",e=>{e.preventDefault();runSearch(search.value)});
-search.addEventListener("input",()=>render(search.value));
-document.querySelectorAll("[data-query]").forEach(b=>b.addEventListener("click",()=>runSearch(b.dataset.query)));
-document.querySelectorAll("[data-tool-id]").forEach(b=>b.addEventListener("click",()=>openTool(b.dataset.toolId)));
-document.getElementById("clearSearch").addEventListener("click",()=>{search.value="";render();document.getElementById("tools").scrollIntoView({behavior:"smooth"})});
-document.getElementById("resetSearch").addEventListener("click",()=>{search.value="";render()});
-document.getElementById("searchFocus").addEventListener("click",()=>{search.focus();document.querySelector(".hero").scrollIntoView({behavior:"smooth"})});
-document.addEventListener("keydown",e=>{if(e.key==="/"&&document.activeElement!==search&&!["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){e.preventDefault();search.focus()}});
-const themeBtn=document.getElementById("themeToggle"),saved=localStorage.getItem("kwikTheme");
-if(saved==="dark"){document.body.classList.add("dark");themeBtn.textContent="☀";themeBtn.setAttribute("aria-pressed","true")}
-themeBtn.addEventListener("click",()=>{const dark=document.body.classList.toggle("dark");themeBtn.textContent=dark?"☀":"☾";themeBtn.setAttribute("aria-pressed",String(dark));localStorage.setItem("kwikTheme",dark?"dark":"light")});
-const mobile=document.getElementById("mobileMenu"),nav=document.querySelector(".main-nav");
-mobile.addEventListener("click",()=>{const open=nav.classList.toggle("mobile-open");mobile.textContent=open?"×":"☰"});
-document.querySelectorAll(".nav-link").forEach(a=>a.addEventListener("click",()=>{nav.classList.remove("mobile-open");mobile.textContent="☰"}));
-const sections=[...document.querySelectorAll("main section[id]")],links=[...document.querySelectorAll(".nav-link")];
-const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){links.forEach(a=>a.classList.toggle("active",a.getAttribute("href")==="#"+entry.target.id))}}),{rootMargin:"-35% 0px -55% 0px",threshold:0});
-sections.forEach(s=>observer.observe(s));
+  imageList.innerHTML=pdfImages.map((item,i)=>`<article class="image-row ${i===selectedPage?'preview-selected':''}" data-page-row="${i}">
+    <div class="page-card-main">
+      <label class="page-select">
+        <input class="page-check" type="checkbox" data-select="${i}" ${selected.has(i)?'checked':''}>
+        <span class="image-thumb" data-preview="${i}" title="Click to preview">
+          <img src="${item.url}" alt="Page ${i+1}">
+        </span>
+        <span class="image-meta">
+          <strong>Page ${i+1} · ${escapeHtml(item.file.name)}</strong>
+          <small>${formatBytes(item.file.size)} · ${item.pageSize==='image'?'Image size':item.pageSize.toUpperCase()} · ${item.orientation} · ${item.margin} mm margin</small>
+        </span>
+      </label>
+      <div class="image-actions">
+        <button type="button" class="preview-page-btn" data-preview="${i}" title="Live preview" aria-label="Preview page ${i+1}">◉</button>
+        <button type="button" data-action="up" data-i="${i}" ${i===0?'disabled':''}>↑</button>
+        <button type="button" data-action="down" data-i="${i}" ${i===pdfImages.length-1?'disabled':''}>↓</button>
+        <button type="button" data-action="rotate" data-i="${i}">↻</button>
+        <button type="button" data-action="remove" data-i="${i}">×</button>
+      </div>
+    </div>
+    <div class="page-settings">
+      <label>Size<select data-setting="pageSize" data-i="${i}"><option value="a4" ${item.pageSize==='a4'?'selected':''}>A4</option><option value="letter" ${item.pageSize==='letter'?'selected':''}>Letter</option><option value="image" ${item.pageSize==='image'?'selected':''}>Image</option></select></label>
+      <label>Orientation<select data-setting="orientation" data-i="${i}"><option value="auto" ${item.orientation==='auto'?'selected':''}>Auto</option><option value="portrait" ${item.orientation==='portrait'?'selected':''}>Portrait</option><option value="landscape" ${item.orientation==='landscape'?'selected':''}>Landscape</option></select></label>
+      <label>Margin<select data-setting="margin" data-i="${i}"><option value="10" ${item.margin===10?'selected':''}>10</option><option value="5" ${item.margin===5?'selected':''}>5</option><option value="0" ${item.margin===0?'selected':''}>0</option></select></label>
+    </div>
+  </article>`).join('');
+
+  imageList.querySelectorAll('.page-check').forEach(x=>x.addEventListener('change',e=>{
+    e.stopPropagation();
+    const i=Number(x.dataset.select);
+    x.checked?selected.add(i):selected.delete(i);
+    selectedPage=i;
+    renderPdfImages();
+  }));
+
+  imageList.querySelectorAll('[data-preview]').forEach(x=>x.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const i=Number(x.dataset.preview);
+    if(pdfImages[i]){selectedPage=i;openPreview(i);}
+  }));
+
+  imageList.querySelectorAll('.image-meta').forEach(x=>x.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const row=x.closest('[data-page-row]');
+    const i=Number(row.dataset.pageRow);
+    if(pdfImages[i]){selectedPage=i;openPreview(i);}
+  }));
+
+  imageList.querySelectorAll('.page-select').forEach(x=>x.addEventListener('click',e=>{
+    if(e.target.closest('.page-check')||e.target.closest('.image-thumb')||e.target.closest('.image-meta'))return;
+    const row=x.closest('[data-page-row]'),i=Number(row.dataset.pageRow);
+    if(pdfImages[i]){selectedPage=i;openPreview(i);}
+  }));
+
+  imageList.querySelectorAll('[data-setting]').forEach(x=>x.addEventListener('change',e=>{
+    e.stopPropagation();
+    const i=Number(x.dataset.i);
+    pdfImages[i][x.dataset.setting]=x.dataset.setting==='margin'?Number(x.value):x.value;
+    selectedPage=i;
+    renderPdfImages();
+  }));
+
+  imageList.querySelectorAll('[data-action]').forEach(x=>x.addEventListener('click',e=>{
+    e.stopPropagation();
+    pageAction(x.dataset.action,Number(x.dataset.i));
+  }));
+}
+function pageAction(action,i){if(action==='remove'){URL.revokeObjectURL(pdfImages[i].url);pdfImages.splice(i,1);selected=new Set([...selected].filter(x=>x!==i).map(x=>x>i?x-1:x));selectedPage=Math.min(selectedPage,Math.max(0,pdfImages.length-1))}else if(action==='up'&&i>0){[pdfImages[i-1],pdfImages[i]]=[pdfImages[i],pdfImages[i-1]];remapSelection(i,i-1);selectedPage=i-1}else if(action==='down'&&i<pdfImages.length-1){[pdfImages[i+1],pdfImages[i]]=[pdfImages[i],pdfImages[i+1]];remapSelection(i,i+1);selectedPage=i+1}else if(action==='rotate'){pdfImages[i].rotation=(pdfImages[i].rotation+90)%360;selectedPage=i}renderPdfImages()}
+function remapSelection(a,b){const n=new Set();selected.forEach(x=>n.add(x===a?b:x===b?a:x));selected=n}
+function makePreview(){if(previewModal)return;previewModal=document.createElement('div');previewModal.className='kwik-preview-modal';previewModal.innerHTML=`<div class="kwik-preview-backdrop"></div><section class="kwik-preview-card" role="dialog" aria-modal="true"><header><strong id="kwikPreviewTitle">Live preview</strong><button id="kwikPreviewClose" type="button">×</button></header><div class="kwik-preview-body"><div class="kwik-preview-stage" id="kwikPreviewStage"></div><aside><label>Page size<select id="pvSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select></label><label>Orientation<select id="pvOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label><label>Margin<select id="pvMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select></label><button id="pvRotate" type="button">↻ Rotate image</button><button id="pvDone" class="primary" type="button">Done</button><p>Changes are saved to this page immediately.</p></aside></div></section>`;document.body.appendChild(previewModal);$('kwikPreviewClose').onclick=closePreview;$('pvDone').onclick=closePreview;previewModal.querySelector('.kwik-preview-backdrop').onclick=closePreview;$('pvSize').onchange=()=>{pdfImages[selectedPage].pageSize=$('pvSize').value;renderPreview();renderPdfImages()};$('pvOrientation').onchange=()=>{pdfImages[selectedPage].orientation=$('pvOrientation').value;renderPreview();renderPdfImages()};$('pvMargin').onchange=()=>{pdfImages[selectedPage].margin=Number($('pvMargin').value);renderPreview();renderPdfImages()};$('pvRotate').onclick=()=>{pdfImages[selectedPage].rotation=(pdfImages[selectedPage].rotation+90)%360;renderPreview();renderPdfImages()}}
+function openPreview(i){if(!pdfImages[i])return;selectedPage=i;makePreview();previewModal.classList.add('open');renderPreview()}
+function closePreview(){previewModal?.classList.remove('open')}
+function renderPreview(){const item=pdfImages[selectedPage];if(!item||!previewModal)return;const s=getSpec(item),stage=$('kwikPreviewStage');$('kwikPreviewTitle').textContent=`Page ${selectedPage+1} of ${pdfImages.length} · Live preview`;$('pvSize').value=item.pageSize;$('pvOrientation').value=item.orientation;$('pvMargin').value=String(item.margin);stage.innerHTML='';const maxW=Math.max(260,stage.clientWidth-60),maxH=Math.max(320,stage.clientHeight-60),scale=Math.min(maxW/s.pw,maxH/s.ph),paper=document.createElement('div');paper.className='kwik-paper';paper.style.width=`${s.pw*scale}px`;paper.style.height=`${s.ph*scale}px`;const img=document.createElement('img');img.src=item.url;const fit=Math.min((s.pw-s.mm*2)/s.iw,(s.ph-s.mm*2)/s.ih);img.style.width=`${s.iw*fit*scale}px`;img.style.height=`${s.ih*fit*scale}px`;img.style.transform=`rotate(${item.rotation}deg)`;paper.appendChild(img);stage.appendChild(paper)}
+function dataUrlBytes(u){const b64=u.split(',')[1]||'',bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
+async function createPdfFile(){if(!pdfImages.length)return;createPdf.disabled=true;pdfStatus.textContent='Creating your PDF…';try{const enc=new TextEncoder(),chunks=[],offsets=[0];let pos=0;const push=s=>{const b=typeof s==='string'?enc.encode(s):s;chunks.push(b);pos+=b.length};push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');const objs=[],add=x=>(objs.push(x),objs.length),catalog=add(null),pagesId=add(null),pids=[],cids=[],iids=[];for(const item of pdfImages){const s=getSpec(item),img=new Image();await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=item.url});const pt=72/25.4,w=Math.max(1,Math.round(s.pw*pt)),h=Math.max(1,Math.round(s.ph*pt)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);const fit=Math.min((s.pw-s.mm*2)/s.iw,(s.ph-s.mm*2)/s.ih),dw=s.iw*fit*pt,dh=s.ih*fit*pt;ctx.save();ctx.translate(w/2,h/2);ctx.rotate(item.rotation*Math.PI/180);ctx.drawImage(img,-dw/2,-dh/2,dw,dh);ctx.restore();const jpeg=dataUrlBytes(canvas.toDataURL('image/jpeg',.92));iids.push(add({dict:`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>`,stream:jpeg}));const cb=enc.encode(`q\n${w} 0 0 ${h} 0 0 cm\n/Im0 Do\nQ\n`);cids.push(add({dict:`<< /Length ${cb.length} >>`,stream:cb}));pids.push(add(null))}objs[catalog-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;objs[pagesId-1]=`<< /Type /Pages /Kids [${pids.map(x=>x+' 0 R').join(' ')}] /Count ${pids.length} >>`;for(let i=0;i<pids.length;i++){const id=iids[i],d=objs[id-1].dict,w=Number(d.match(/\/Width (\d+)/)[1]),h=Number(d.match(/\/Height (\d+)/)[1]);objs[pids[i]-1]=`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im0 ${id} 0 R >> >> /Contents ${cids[i]} 0 R >>`}objs.forEach((o,i)=>{offsets[i+1]=pos;push(`${i+1} 0 obj\n`);if(typeof o==='string')push(o+'\nendobj\n');else{push(o.dict+'\nstream\n');push(o.stream);push('\nendstream\nendobj\n')}});const xref=pos;push(`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`);for(let i=1;i<=objs.length;i++)push(String(offsets[i]).padStart(10,'0')+' 00000 n \n');push(`trailer\n<< /Size ${objs.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`);const url=URL.createObjectURL(new Blob(chunks,{type:'application/pdf'})),a=document.createElement('a');a.href=url;a.download=`KwikToolForAll_${new Date().toISOString().slice(0,10)}.pdf`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);clearWorkspace();showSuccess()}catch(e){console.error(e);pdfStatus.textContent='Something went wrong. Your images are still here.';createPdf.disabled=false;showToast('Could not create the PDF. Please try again.')}}
+createPdf.onclick=createPdfFile;
+$('searchForm').onsubmit=e=>{e.preventDefault();render(search.value);$('tools').scrollIntoView({behavior:'smooth',block:'start'})};document.querySelectorAll('[data-query]').forEach(b=>b.onclick=()=>{search.value=b.dataset.query;render(b.dataset.query);$('tools').scrollIntoView({behavior:'smooth',block:'start'})});$('clearSearch').onclick=()=>{search.value='';render()};$('resetSearch').onclick=()=>{search.value='';render()};$('searchFocus').onclick=()=>{search.focus();window.scrollTo({top:0,behavior:'smooth'})};$('themeToggle').onclick=()=>document.body.classList.toggle('dark-mode');$('mobileMenu').onclick=()=>document.querySelector('.main-nav')?.classList.toggle('mobile-open');
 render();
-
-
-
