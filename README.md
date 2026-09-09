@@ -1,23 +1,16 @@
-# KwikToolForAll — Final UI Foundation
+# KwikToolForAll — Final UI v2
 
-This package is the final homepage/UI foundation before functional file-processing engines are connected.
+This version addresses the reported UI issues:
+- Replaced plain K text with a custom SVG K logo in header, About and footer.
+- Reworked typography with Manrope + DM Sans and increased readability.
+- Enlarged and improved tool/category controls.
+- Removed awkward browser-default focus appearance; focus is now deliberate and contained.
+- Category buttons use explicit tool IDs, so Image → PDF and every category option resolves correctly.
+- Category count is fixed at 10 tools; search result count no longer corrupts the category count.
+- Working dark mode with localStorage persistence.
+- Working Home, Tools, How it works, Privacy and About navigation.
+- Responsive mobile navigation.
+- Search and popular/category selection work.
+- No external JS libraries are required.
 
-## Included
-- Responsive navy/blue/purple visual design
-- Search-first workflow
-- Popular tools and complete categorized toolbox
-- Working search and category navigation
-- Working dark mode with localStorage persistence
-- Working Home, Tools, How it works, Privacy and About navigation
-- Privacy section
-- Creator/About section
-- Mobile navigation
-- Keyboard `/` search shortcut
-- Accessible labels and focus-friendly controls
-- No external libraries required
-
-## Important
-The tool buttons intentionally do not claim to process files yet. They show a status message until the real browser-side processing engines are implemented.
-
-## Deploy
-Replace `index.html`, `style.css`, and `script.js` in the repository root and commit to `main`.
+The processing engines are not faked. Tool selection currently routes to the relevant tool area and explains that the actual processing workspace will be connected next.

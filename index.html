@@ -5,12 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="KwikToolForAll — simple, useful file tools for everyday work.">
 <title>KwikToolForAll — Simple tools. Real value.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="topbar" id="home">
   <a class="brand" href="#home" aria-label="KwikToolForAll home">
-    <span class="brand-mark">K</span>
+    <span class="brand-logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><defs><linearGradient id="kg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#kg)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg>
+    </span>
     <span class="brand-copy"><b>KwikToolForAll</b><small>Everyday file tools</small></span>
   </a>
   <nav class="main-nav" aria-label="Main navigation">
@@ -39,8 +44,7 @@
       <input id="toolSearch" type="search" placeholder="What do you want to do?  e.g. image to PDF" aria-label="Search tools">
       <button type="submit">Search <b>→</b></button>
     </form>
-    <div class="popular">
-      <b>Popular:</b>
+    <div class="popular"><b>Popular:</b>
       <button type="button" data-query="image to pdf">Image to PDF</button>
       <button type="button" data-query="merge pdf">Merge PDF</button>
       <button type="button" data-query="compress">Compress</button>
@@ -51,10 +55,7 @@
   <div class="hero-art" aria-hidden="true">
     <div class="art-glow"></div>
     <div class="scribble one">Simple.<br>Fast.<br>Secure.<span></span></div>
-    <div class="visual-file photo">
-      <div class="photo-art"><span>▲</span><span>●</span><span>△</span></div>
-      <b>JPG / PNG</b>
-    </div>
+    <div class="visual-file photo"><div class="photo-art"><span>▲</span><span>●</span><span>△</span></div><b>JPG / PNG</b></div>
     <div class="visual-arrow">→</div>
     <div class="visual-file pdf"><strong>PDF</strong><div class="paper-lines"></div></div>
     <div class="secure-float"><span>✓</span><div><b>Browser-first</b><small>Your files stay local whenever possible.</small></div></div>
@@ -76,31 +77,31 @@
 
 <section class="category-area" id="categories">
   <div class="section-head">
-    <div><span class="section-icon grid-icon">▦</span><div><h2>All tools by category</h2><p>Browse tools by what you want to do.</p></div></div>
-    <span class="tool-count" id="toolCount">10 tools</span>
+    <div><span class="section-icon grid-icon">▦</span><div><h2>All tools by category</h2><p>Choose a tool and jump straight to it.</p></div></div>
+    <span class="tool-count">10 tools</span>
   </div>
   <div class="category-grid">
     <article class="category-card documents">
       <header><span class="category-icon">▤</span><div><h3>Documents</h3><small>2 tools</small></div></header>
-      <button data-query="document scanner">Document Scanner <b>›</b></button>
-      <button data-query="image to text">Image → Text <b>›</b></button>
+      <button class="category-tool" data-tool-id="scanner"><span>Document Scanner</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="ocr"><span>Image → Text</span><b>→</b></button>
     </article>
     <article class="category-card pdf-tools">
       <header><span class="category-icon">▥</span><div><h3>PDF Tools</h3><small>4 tools</small></div></header>
-      <button data-query="image to pdf">Image → PDF <b>›</b></button>
-      <button data-query="pdf jpg png">PDF → JPG / PNG <b>›</b></button>
-      <button data-query="merge pdf">Merge PDF <b>›</b></button>
-      <button data-query="split pdf">Split PDF <b>›</b></button>
+      <button class="category-tool" data-tool-id="image-pdf"><span>Image → PDF</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="pdf-image"><span>PDF → JPG / PNG</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="merge"><span>Merge PDF</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="split"><span>Split PDF</span><b>→</b></button>
     </article>
     <article class="category-card images">
       <header><span class="category-icon">▧</span><div><h3>Image Tools</h3><small>2 tools</small></div></header>
-      <button data-query="compress image">Compress Image <b>›</b></button>
-      <button data-query="jpg png">JPG ↔ PNG <b>›</b></button>
+      <button class="category-tool" data-tool-id="compress-image"><span>Compress Image</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="jpg-png"><span>JPG ↔ PNG</span><b>→</b></button>
     </article>
     <article class="category-card sharing">
       <header><span class="category-icon">⌯</span><div><h3>Sharing</h3><small>2 tools</small></div></header>
-      <button data-query="share send">Share & Send <b>›</b></button>
-      <button data-query="temporary link">Temporary Link <b>›</b></button>
+      <button class="category-tool" data-tool-id="share"><span>Share & Send</span><b>→</b></button>
+      <button class="category-tool" data-tool-id="temporary"><span>Temporary Link</span><b>→</b></button>
     </article>
   </div>
 </section>
@@ -134,13 +135,15 @@
 
 <section class="about-section" id="about">
   <div class="about-grid">
-    <div class="about-label"><span>ABOUT THE CREATOR</span><div class="creator-mark">K</div></div>
+    <div class="about-label"><span>ABOUT THE CREATOR</span>
+      <div class="creator-logo"><svg viewBox="0 0 48 48"><defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#ag)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg></div>
+    </div>
     <div class="about-copy">
       <span>WHY KWIKTOOLFORALL?</span>
       <h2>Built from a simple idea:<br><strong>work shouldn't feel harder than it is.</strong></h2>
       <p>Hi, I'm <b>Nitish Kumar Singh</b>. I created KwikToolForAll to bring the small file utilities people repeatedly need into one clean, straightforward workspace.</p>
       <p>Whether you're working with documents, PDFs, images or everyday office files, the goal is simple: fewer tabs, fewer confusing interfaces and less unnecessary uploading.</p>
-      <div class="creator-points"><span>01 <b>Useful first</b></span><span>02 <b>Privacy-minded</b></span><span>03 <b>Made to keep improving</b></span></div>
+      <div class="creator-points"><span>01 <b>Useful first</b></span><span>02 <b>Privacy-minded</b></span><span>03 <b>Always improving</b></span></div>
     </div>
   </div>
 </section>
@@ -153,11 +156,10 @@
 </main>
 
 <footer>
-  <div class="footer-brand"><span class="brand-mark">K</span><div><b>KwikToolForAll</b><small>Everyday file tools</small></div></div>
+  <div class="footer-brand"><span class="brand-logo small-logo"><svg viewBox="0 0 48 48"><defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#fg)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg></span><div><b>KwikToolForAll</b><small>Everyday file tools</small></div></div>
   <div class="footer-links"><a href="#tools">Tools</a><a href="#privacy">Privacy</a><a href="#about">About</a></div>
   <p>Simple tools. Real value.</p>
 </footer>
-
 <div class="toast" id="toast" role="status"></div>
 <script src="script.js"></script>
 </body>
