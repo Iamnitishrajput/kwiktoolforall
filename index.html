@@ -8,8 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=19">
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 <header class="topbar" id="home">
@@ -28,7 +27,7 @@
   </nav>
   <div class="header-actions">
     <button class="circle-btn" id="searchFocus" aria-label="Focus search">⌕</button>
-    <button class="circle-btn theme-toggle" id="themeToggle" aria-label="Switch to dark mode" aria-pressed="false"><span class="theme-icon">☾</span><span class="theme-label">Dark</span></button>
+    <button class="circle-btn" id="themeToggle" aria-label="Toggle dark mode" aria-pressed="false">☾</button>
     <a class="explore-btn" href="#tools">Explore tools <span>→</span></a>
   </div>
   <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
@@ -39,19 +38,13 @@
   <div class="hero-copy">
     <div class="kicker"><i></i> SIMPLE. FAST. USEFUL.</div>
     <h1>Your files.<br><strong>Your workflow.</strong><br>One toolbox.</h1>
-    <p>Convert, combine, split and optimize — without the hassle.</p>
+    <p>Convert, scan, extract, compress and share — without the hassle.</p>
     <form class="search-box" id="searchForm">
       <span class="search-symbol">⌕</span>
       <input id="toolSearch" type="search" placeholder="What do you want to do?  e.g. image to PDF" aria-label="Search tools">
       <button type="submit">Search <b>→</b></button>
     </form>
-    <div class="popular"><b>Popular:</b>
-      <button type="button" data-query="image to pdf">Image to PDF</button>
-      <button type="button" data-query="merge pdf">Merge PDF</button>
-      <button type="button" data-query="split pdf">Split PDF</button>
-      <button type="button" data-query="resize image">Resize Image</button>
-      <button type="button" data-query="compress image">Compress Image</button>
-    </div>
+    <div class="popular"><b>Popular:</b><button type="button" data-query="image to pdf">Image to PDF</button><button type="button" data-query="merge pdf">Merge PDF</button><button type="button" data-query="split pdf">Split PDF</button><button type="button" data-query="compress pdf">Compress PDF</button><button type="button" data-query="resize image">Resize Image</button><button type="button" data-query="compress image">Compress Image</button></div>
   </div>
   <div class="hero-art" aria-hidden="true">
     <div class="art-glow"></div>
@@ -64,21 +57,7 @@
   </div>
 </section>
 
-<section class="tools-area" id="tools">
-  <div class="section-head all-tools-head">
-    <div><span class="section-icon fire">✦</span><div><h2>All tools</h2><p>Browse every tool available in KwikToolForAll.</p></div></div>
-    <div class="all-tools-menu">
-      <button class="view-all all-tools-toggle" id="allToolsToggle" type="button" aria-expanded="false" aria-controls="allToolsDropdown">All tools <span>⌄</span></button>
-      <div class="all-tools-dropdown" id="allToolsDropdown" hidden></div>
-    </div>
-  </div>
-  <div class="tool-grid" id="toolGrid"></div>
-  <div class="empty-state" id="emptyState" hidden>
-    <div>⌕</div><h3>No matching tool</h3><p>Try “PDF”, “merge”, “split”, “resize” or “compress”.</p>
-    <button id="resetSearch">Show all tools</button>
-  </div>
-</section>
-
+<section class="tools-area" id="tools"><div class="section-head all-tools-head"><div><span class="section-icon fire">✦</span><div><h2>All tools</h2><p>Browse every tool available in KwikToolForAll.</p></div></div><div class="all-tools-menu"><button class="view-all all-tools-toggle" id="allToolsToggle" type="button" aria-expanded="false" aria-controls="allToolsDropdown">All tools <span>⌄</span></button><div class="all-tools-dropdown" id="allToolsDropdown" hidden></div></div></div><div class="tool-grid" id="toolGrid"></div><div class="empty-state" id="emptyState" hidden><div>⌕</div><h3>No matching tool</h3><p>Try “PDF”, “merge”, “split”, “resize” or “compress”.</p><button id="resetSearch">Show all tools</button></div></section>
 
 
 <section class="benefits">
@@ -212,57 +191,9 @@
       </button>
       <small class="success-note">No account • No cloud storage • No file retained</small>
     </div>
-
-    <div class="utility-workspace" id="utilityWorkspace" hidden>
-      <div class="workspace-head utility-head">
-        <div><span class="workspace-kicker" id="utilityKicker">PDF TOOL</span><h2 id="utilityTitle">Utility</h2><p id="utilityDesc">Work locally in your browser.</p></div>
-        <span class="local-pill">● Local processing</span>
-      </div>
-      <div id="utilityBody"></div>
-      <div class="utility-footer"><span id="utilityStatus">Ready.</span><button type="button" class="text-btn" id="utilityClear">Clear</button></div>
-    </div>
-
-    <div class="scanner-workspace" id="scannerWorkspace" hidden>
-      <div class="scanner-head">
-        <div><span class="workspace-kicker scanner-kicker">DOCUMENT SCANNER</span><h2>Scan, clean & export</h2><p>Upload document images, clean them automatically, crop freely and export locally.</p></div>
-        <span class="local-pill">● Local processing</span><button type="button" class="scanner-close-btn" id="scannerClose" aria-label="Close scanner">×</button>
-      </div>
-      <div class="scanner-upload" id="scannerUpload">
-        <div class="scanner-upload-actions">
-          <label class="scanner-button primary"><span>＋</span> Upload images<input id="scannerFiles" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden></label>
-        </div>
-        <label class="auto-scan-toggle"><input id="autoScan" type="checkbox" checked><span>Auto-detect document edges</span><small>Automatically crop the document area when possible.</small></label>
-        <p>Everything is processed in this browser. No camera or cloud upload is required.</p>
-      </div>
-      <div class="scanner-layout">
-        <div class="scanner-canvas-panel">
-          <div class="scanner-panel-head"><strong id="scannerPageTitle">No page selected</strong><span id="scannerPageCount">0 pages</span></div>
-          <div class="scanner-stage" id="scannerStage"><div class="scanner-empty">Upload a document image to begin.</div></div>
-          <div class="scanner-page-actions"><button type="button" id="scannerPrev">← Previous</button><button type="button" id="scannerNext">Next →</button><button type="button" id="scannerAddPage">＋ Add page</button></div>
-        </div>
-        <aside class="scanner-controls">
-          <div class="scanner-control-group"><strong>Document colour</strong><div class="chip-grid scanner-filter-grid" id="scannerFilters"><button type="button" data-filter="original" class="active">Original</button><button type="button" data-filter="gray">Grayscale</button><button type="button" data-filter="bw">B&amp;W</button></div></div>
-          <div class="scanner-control-group"><strong>Crop &amp; rotate</strong><div class="scanner-two"><button type="button" id="scannerAutoCrop">✦ Auto crop</button><button type="button" id="scannerManualCrop">Free crop</button></div><button type="button" id="scannerSquareCrop" class="full-control">□ Square crop</button><div class="scanner-two"><button type="button" id="scannerRotateLeft">↺ Rotate left</button><button type="button" id="scannerRotateRight">↻ Rotate right</button></div></div>
-          <div class="scanner-control-group"><strong>Page size</strong><select id="scannerPageSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="id">ID Card</option><option value="original">Original</option></select></div>
-          <div class="scanner-control-group"><strong>Export format</strong><div class="export-grid scanner-export-grid"><button type="button" data-export="pdf" class="active">PDF</button><button type="button" data-export="jpg">JPEG</button><button type="button" data-export="png">PNG</button></div><p class="scanner-format-note" id="scannerFormatNote">PDF selected · all pages will be included.</p><div class="scanner-export-actions"><button type="button" id="scannerDownload" class="download-scan">↓ Download</button><button type="button" id="scannerShare" class="share-all">↥ Share Device / Apps</button></div></div>
-          <p class="scanner-privacy">Local processing: your source images stay in this browser. No cloud upload is required for scanning or export.</p>
-        </aside>
-      </div>
-      <div class="scanner-bottom"><button type="button" id="scannerClear" class="text-btn">Clear scanner</button><span id="scannerStatus">Ready for a document.</span><button type="button" id="scannerDone" class="primary-action">Done</button></div>
-      <div class="scanner-success" id="scannerSuccess" hidden>
-        <div class="success-orbit"><div class="success-check" aria-hidden="true"></div></div>
-        <span class="success-eyebrow">DOWNLOAD COMPLETE</span>
-        <h3>Thank you for using<br><strong>KwikToolForAll.</strong></h3>
-        <p class="success-main" id="scannerSuccessMain">Your scanned file is now downloaded.</p>
-        <p class="success-sub">Please check your <strong>Downloads</strong> folder.</p>
-        <div class="privacy-confirm"><span class="privacy-confirm-icon" aria-hidden="true"></span><div><strong>Your privacy is protected</strong><span>Your document was processed locally in your browser and was not uploaded to our servers. Temporary workspace data has been cleared.</span></div></div>
-        <button type="button" class="reuse-tool" id="reuseScannerTool"><span>↻</span> Re-use the scanner</button>
-        <small class="success-note">No account • No cloud storage • No file retained</small>
-      </div>
-      <div class="scanner-share-panel" id="scannerSharePanel" hidden><div class="share-panel-head"><strong>Share scanned document</strong><button type="button" id="scannerShareClose">×</button></div><p>Your selected format will be shared through your device's available apps.</p><button type="button" data-share="system" class="device-share-option">📤 Share Device / Apps</button></div>
-    </div>
   </section>
+<div class="utility-workspace" id="utilityWorkspace" hidden><div class="workspace-head utility-head"><div><span class="workspace-kicker" id="utilityKicker">FILE TOOL</span><h2 id="utilityTitle">Utility</h2><p id="utilityDesc">Work locally in your browser.</p></div><span class="local-pill">● Local processing</span></div><div id="utilityBody"></div><div class="utility-footer"><span id="utilityStatus">Ready.</span><button type="button" class="text-btn" id="utilityClear">Clear</button></div></div>
 </div>
-<script src="script.js?v=17"></script>
+<script src="script.js?v=20"></script>
 </body>
 </html>
