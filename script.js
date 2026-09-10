@@ -185,5 +185,38 @@ if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudfl
 function renderCompressPdfTool(body){body.innerHTML=utilityUploadMarkup('compress-pdf',false)+`<div class="compression-choices"><button type="button" class="compression-choice active" data-pdf-level="light"><b>Quality-first</b><small>Light compression · preserves more detail.</small></button><button type="button" class="compression-choice" data-pdf-level="balanced"><b>Balanced</b><small>Good quality with a meaningful size reduction.</small></button><button type="button" class="compression-choice" data-pdf-level="small"><b>Smaller file</b><small>Stronger reduction for easier sharing.</small></button></div><div class="utility-actions"><button class="primary-action" id="compressPdfRun" disabled>Compress PDF →</button></div>`;let file=null,level='light';const input=$('utilityFiles'),run=$('compressPdfRun');body.querySelectorAll('[data-pdf-level]').forEach(b=>b.onclick=()=>{level=b.dataset.pdfLevel;body.querySelectorAll('[data-pdf-level]').forEach(x=>x.classList.toggle('active',x===b));if(file)run.disabled=false;$('utilityStatus').textContent=`${b.querySelector('b').textContent} selected.`});input.onchange=()=>{file=input.files[0]||null;$('utilityFileList').innerHTML=file?`<div class="utility-file"><span>1</span><div><b>${escapeHtml(file.name)}</b><small>${formatBytes(file.size)}</small></div></div>`:'';run.disabled=!file;$('utilityStatus').textContent=file?`PDF ready · ${formatBytes(file.size)} · ${level==='light'?'Quality-first':level==='balanced'?'Balanced':'Smaller file'} selected.`:'Choose a PDF.'};run.onclick=async()=>{try{if(!window.pdfjsLib)throw Error('PDF renderer unavailable');run.disabled=true;const cfg={light:{scale:1.35,q:.9},balanced:{scale:1.1,q:.76},small:{scale:.85,q:.58}}[level],pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,pages=[];for(let n=1;n<=pdf.numPages;n++){const page=await pdf.getPage(n),vp=page.getViewport({scale:cfg.scale}),c=document.createElement('canvas');c.width=Math.max(1,Math.round(vp.width));c.height=Math.max(1,Math.round(vp.height));await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;pages.push(await canvasBlob(c,'image/jpeg',cfg.q));$('utilityStatus').textContent=`Compressing page ${n} of ${pdf.numPages}…`}downloadBlob(await jpegBlobsToPdf(pages),'KwikToolForAll_Compressed.pdf');showUtilitySuccess(`${level==='light'?'Quality-first':level==='balanced'?'Balanced':'Smaller file'} PDF compression complete. Your compressed PDF is now downloaded.`)}catch(e){console.error(e);showToast('Could not compress this PDF.');$('utilityStatus').textContent='Compression failed.'}finally{run.disabled=false}}}
 async function jpegBlobsToPdf(blobs){const enc=new TextEncoder(),chunks=[],offsets=[0],objs=[],add=o=>(objs.push(o),objs.length),catalog=add(null),pages=add(null),kids=[],contents=[],images=[];let pos=0;const push=v=>{const b=typeof v==='string'?enc.encode(v):v;chunks.push(b);pos+=b.length};push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');for(const blob of blobs){const bytes=dataUrlBytes(await blobDataUrl(blob)),im=new Image(),u=URL.createObjectURL(blob);await new Promise((r,j)=>{im.onload=r;im.onerror=j;im.src=u});const w=im.naturalWidth,h=im.naturalHeight;URL.revokeObjectURL(u);const iid=add({dict:`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>`,stream:bytes});images.push(iid);const s=enc.encode(`q\n${w} 0 0 ${h} 0 0 cm\n/Im0 Do\nQ\n`),cid=add({dict:`<< /Length ${s.length} >>`,stream:s});contents.push(cid);kids.push(add(null))}objs[catalog-1]=`<< /Type /Catalog /Pages ${pages} 0 R >>`;objs[pages-1]=`<< /Type /Pages /Kids [${kids.map(x=>x+' 0 R').join(' ')}] /Count ${kids.length} >>`;kids.forEach((pid,i)=>{const d=objs[images[i]-1].dict,w=Number(d.match(/\/Width (\d+)/)[1]),h=Number(d.match(/\/Height (\d+)/)[1]);objs[pid-1]=`<< /Type /Page /Parent ${pages} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im0 ${images[i]} 0 R >> >> /Contents ${contents[i]} 0 R >>`});for(let i=0;i<objs.length;i++){offsets[i+1]=pos;push(`${i+1} 0 obj\n`);const o=objs[i];if(typeof o==='string')push(o+'\nendobj\n');else{push(o.dict+'\nstream\n');push(o.stream);push('\nendstream\nendobj\n')}}const xref=pos;push(`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`);for(let i=1;i<=objs.length;i++)push(String(offsets[i]).padStart(10,'0')+' 00000 n \n');push(`trailer\n<< /Size ${objs.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`);return new Blob(chunks,{type:'application/pdf'})}
 function blobDataUrl(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob)})}
-$('closeTool').onclick=()=>{if($('utilityWorkspace')&&!$('utilityWorkspace').hidden){closeUtility();return}_baseCloseImagePdf()};document.querySelector('[data-close-tool]').onclick=()=>{if($('utilityWorkspace')&&!$('utilityWorkspace').hidden){closeUtility();return}_baseCloseImagePdf()};
+function closeActiveTool(){
+  if($('utilityWorkspace') && !$('utilityWorkspace').hidden){ closeUtility(); return; }
+  closeImagePdf();
+}
+$('closeTool').onclick=closeActiveTool;
+document.querySelector('[data-close-tool]').onclick=closeActiveTool;
+
+// Homepage navigation: popular shortcuts and All Tools menu must open tools directly.
+const popularLinks=document.querySelectorAll('.popular [data-query]');
+popularLinks.forEach(btn=>btn.addEventListener('click',()=>{
+  const match=tools.find(t=>t.name.toLowerCase()===btn.dataset.query.toLowerCase()) ||
+    tools.find(t=>t.name.toLowerCase().replace(/\s+/g,' ').includes(btn.dataset.query.toLowerCase()));
+  if(match){ openTool(match.id); }
+}));
+const allToolsToggle=$('allToolsToggle'), allToolsDropdown=$('allToolsDropdown');
+function populateAllToolsMenu(){
+  if(!allToolsDropdown)return;
+  allToolsDropdown.innerHTML=tools.map(t=>`<button type=\"button\" class=\"all-tool-option\" data-menu-open=\"${t.id}\"><span class=\"menu-tool-icon ${t.color}\">${t.icon}</span><span><b>${escapeHtml(t.name)}</b><small>${escapeHtml(t.desc)}</small></span><span aria-hidden=\"true\">→</span></button>`).join('');
+  allToolsDropdown.querySelectorAll('[data-menu-open]').forEach(btn=>btn.addEventListener('click',()=>{
+    allToolsDropdown.hidden=true; allToolsToggle?.setAttribute('aria-expanded','false'); openTool(btn.dataset.menuOpen);
+  }));
+}
+populateAllToolsMenu();
+allToolsToggle?.addEventListener('click',e=>{
+  e.stopPropagation();
+  const willOpen=allToolsDropdown.hidden;
+  allToolsDropdown.hidden=!willOpen;
+  allToolsToggle.setAttribute('aria-expanded',String(willOpen));
+});
+document.addEventListener('click',e=>{
+  if(allToolsDropdown && !allToolsDropdown.hidden && !e.target.closest('.all-tools-menu')){
+    allToolsDropdown.hidden=true; allToolsToggle?.setAttribute('aria-expanded','false');
+  }
+});
 render();
