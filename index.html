@@ -8,18 +8,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=31.1">
+<link rel="stylesheet" href="style.css?v=33.1">
 </head>
 <body>
 <header class="topbar" id="home">
-  <a class="brand" href="#home" aria-label="KwikToolForAll home">
+  <a class="brand" href="#home" id="brandHome" aria-label="KwikToolForAll home">
     <span class="brand-logo" aria-hidden="true">
       <svg viewBox="0 0 48 48"><defs><linearGradient id="kg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#kg)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg>
     </span>
     <span class="brand-copy"><b>KwikToolForAll</b><small>Everyday file tools</small></span>
   </a>
   <nav class="main-nav" aria-label="Main navigation">
-    <a href="#home" class="nav-link active">Home</a>
+    <a href="#home" class="nav-link active" id="homeNav">Home</a>
     <a href="#tools" class="nav-link">Tools</a>
     <a href="#how" class="nav-link">How it works</a>
     <a href="#privacy" class="nav-link">Privacy</a>
@@ -44,7 +44,7 @@
       <input id="toolSearch" type="search" placeholder="What do you want to do?  e.g. image to PDF" aria-label="Search tools">
       <button type="submit">Search <b>→</b></button>
     </form>
-    <div class="popular"><b>Popular:</b><button type="button" data-query="image to pdf">Image to PDF</button><button type="button" data-query="merge pdf">Merge PDF</button><button type="button" data-query="split pdf">Split PDF</button><button type="button" data-query="compress pdf">Compress PDF</button><button type="button" data-query="resize image">Resize Image</button><button type="button" data-query="compress image">Compress Image</button></div>
+    <div class="popular"><b>Popular:</b><button type="button" data-tool-id="image-pdf">Image to PDF</button><button type="button" data-tool-id="merge">Merge PDF</button><button type="button" data-tool-id="split">Split PDF</button><button type="button" data-tool-id="compress-pdf">Compress PDF</button><button type="button" data-tool-id="resize-image">Resize & Photo Size</button><button type="button" data-tool-id="compress-image">Compress Image</button></div>
   </div>
   <div class="hero-art" aria-hidden="true">
     <div class="art-glow"></div>

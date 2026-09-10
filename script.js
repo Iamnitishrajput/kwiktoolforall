@@ -583,13 +583,22 @@ $('utilityClose').onclick=closeUtility;
 document.querySelector('[data-close-utility]').onclick=closeUtility;
 $('utilityClear').onclick=()=>{if(window.__utilityId)openUtility(window.__utilityId)};
 
-// Homepage navigation: popular shortcuts and All Tools menu must open tools directly.
-const popularLinks=document.querySelectorAll('.popular [data-query]');
+// Homepage navigation: use explicit tool IDs so labels/icons can change without breaking routing.
+const popularLinks=document.querySelectorAll('.popular [data-tool-id]');
 popularLinks.forEach(btn=>btn.addEventListener('click',()=>{
-  const match=tools.find(t=>t.name.toLowerCase()===btn.dataset.query.toLowerCase()) ||
-    tools.find(t=>t.name.toLowerCase().replace(/\s+/g,' ').includes(btn.dataset.query.toLowerCase()));
-  if(match){ openTool(match.id); }
+  const id=btn.dataset.toolId;
+  if(tools.some(t=>t.id===id)) openTool(id);
 }));
+
+// Home means the actual beginning of the page, not just changing the URL hash.
+function goHome(e){
+  if(e) e.preventDefault();
+  document.querySelector('.main-nav')?.classList.remove('mobile-open');
+  window.scrollTo({top:0,left:0,behavior:'smooth'});
+  history.replaceState(null,'','#home');
+}
+$('homeNav')?.addEventListener('click',goHome);
+$('brandHome')?.addEventListener('click',goHome);
 const allToolsToggle=$('allToolsToggle'), allToolsDropdown=$('allToolsDropdown');
 function populateAllToolsMenu(){
   if(!allToolsDropdown)return;

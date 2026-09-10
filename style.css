@@ -817,3 +817,21 @@ body.dark .privacy-card{box-shadow:none}
 @media(min-width:741px){.hero-art .scribble.one{left:28px;top:12px}.hero-art .photo{right:275px}.hero-art .pdf{right:124px}.hero-art .visual-arrow{right:212px}.hero-art .secure-float{right:0}}
 @media(max-width:740px){.hero-art .scribble.one{left:2%;right:auto;top:0}.hero:after{height:80px;bottom:-65px}.benefits{box-shadow:none}}
 @media(max-width:430px){.hero-art .scribble.one{left:1%;top:0;transform:scale(.9);transform-origin:left top}.hero-art .scribble.two{transform:scale(.9);transform-origin:right bottom}}
+
+
+/* V33 navigation, icon contrast and modal scrollbar polish */
+html{scroll-padding-top:86px}
+.steps article>span{color:#315d9d}
+body.dark .steps article>span{background:#1a2b45;color:#e8f0ff;border:1px solid #2c405d}
+body.dark .benefit.blue,body.dark .benefit.green,body.dark .benefit.purple,body.dark .benefit.red{border:1px solid rgba(255,255,255,.06)}
+body.dark .section-icon,.dark .upload-icon,.dark .menu-tool-icon{filter:none}
+.tool-workspace,.utility-shell{scrollbar-width:thin;scrollbar-color:#b7c4d5 transparent;scrollbar-gutter:stable}
+.tool-workspace::-webkit-scrollbar,.utility-shell::-webkit-scrollbar{width:10px}
+.tool-workspace::-webkit-scrollbar-track,.utility-shell::-webkit-scrollbar-track{background:transparent;border-radius:999px}
+.tool-workspace::-webkit-scrollbar-thumb,.utility-shell::-webkit-scrollbar-thumb{background:#b7c4d5;border:3px solid transparent;background-clip:padding-box;border-radius:999px}
+.tool-workspace::-webkit-scrollbar-thumb:hover,.utility-shell::-webkit-scrollbar-thumb:hover{background:#8ea0b8;border:3px solid transparent;background-clip:padding-box}
+body.dark .tool-workspace,.dark .utility-shell{scrollbar-color:#4a5d77 transparent}
+body.dark .tool-workspace::-webkit-scrollbar-thumb,.dark .utility-shell::-webkit-scrollbar-thumb{background:#4a5d77;border:3px solid transparent;background-clip:padding-box}
+body.dark .tool-workspace::-webkit-scrollbar-thumb:hover,.dark .utility-shell::-webkit-scrollbar-thumb:hover{background:#637795;border:3px solid transparent;background-clip:padding-box}
+.tool-workspace,.utility-shell{overscroll-behavior:contain}
+@media(max-width:740px){html{scroll-padding-top:72px}}
