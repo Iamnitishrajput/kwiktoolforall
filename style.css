@@ -615,3 +615,90 @@ body.dark .tool-workspace{background:#101d34;color:#f3f6fc}.dark .workspace-clos
 .dark .compress-final-stats>div{background:#101d34;border-color:#2b3d56}
 @media(max-width:800px){.pdf-compress-grid{grid-template-columns:1fr}.compress-pdf-controls{grid-template-columns:1fr 1fr}.pdf-compression-choices{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.compress-pdf-controls{grid-template-columns:1fr}.compress-pdf-summary{grid-template-columns:1fr}.pdf-compression-choices{grid-template-columns:1fr}.compress-result-card{grid-template-columns:1fr 1fr}.result-arrow{display:none}.result-saving{padding-left:0;border-left:0;border-top:1px solid #e1e7ef;padding-top:8px}.compress-final-stats{grid-template-columns:1fr}}
+
+/* V27 — Compress PDF controls polish */
+.compress-pdf-controls{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-top:15px;
+  align-items:stretch;
+}
+.compress-pdf-controls .utility-field{
+  margin:0;
+  padding:12px 13px;
+  border:1px solid #dce5ef;
+  border-radius:13px;
+  background:#fbfcfe;
+}
+.compress-pdf-controls .utility-field label{
+  min-height:0;
+  gap:7px;
+  color:#243650;
+  font-size:10px;
+  font-weight:850;
+}
+.compress-pdf-controls .utility-field small{
+  min-height:25px;
+  margin-top:7px;
+  line-height:1.4;
+}
+.compress-pdf-controls select,
+.compress-pdf-controls input[type="number"]{
+  width:100%;
+  height:39px;
+  border:1px solid #d4deea;
+  border-radius:10px;
+  padding:8px 10px;
+  background:#fff;
+  color:#172941;
+  outline:0;
+  font-size:11px;
+}
+.compress-pdf-controls select:focus,
+.compress-pdf-controls input[type="number"]:focus{
+  border-color:#6c7cff;
+  box-shadow:0 0 0 3px rgba(108,124,255,.10);
+}
+.compress-pdf-controls input[type="range"]{
+  width:100%;
+  height:22px;
+  margin:1px 0 0;
+  accent-color:#6654ff;
+  cursor:pointer;
+}
+.compress-pdf-controls .range-value{
+  display:block;
+  margin:0;
+  color:#6654ff;
+  font-size:10px;
+  font-weight:900;
+}
+.compress-check{
+  grid-column:1 / -1;
+  min-height:0!important;
+  margin:0!important;
+  padding:10px 12px!important;
+  border:1px solid #dce5ef;
+  border-radius:12px;
+  background:#f8fafc;
+  color:#52627a!important;
+  font-size:9px!important;
+  line-height:1.35;
+  align-self:auto;
+}
+.compress-check input{width:15px;height:15px;margin:0 7px 0 0;accent-color:#6654ff}
+.dark .compress-pdf-controls .utility-field,
+.dark .compress-check{background:#101d34;border-color:#2b3d56}
+.dark .compress-pdf-controls .utility-field label{color:#eef4ff}
+.dark .compress-pdf-controls select,
+.dark .compress-pdf-controls input[type="number"]{background:#111f35;color:#eef4ff;border-color:#2b3d56}
+.dark .compress-check{color:#b7c3d6!important}
+@media(max-width:800px){
+  .compress-pdf-controls{grid-template-columns:1fr 1fr}
+  .compress-check{grid-column:1 / -1}
+}
+@media(max-width:650px){
+  .compress-pdf-controls{grid-template-columns:1fr}
+  .compress-check{grid-column:auto}
+}
