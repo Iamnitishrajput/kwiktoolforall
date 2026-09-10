@@ -599,6 +599,14 @@ function goHome(e){
 }
 $('homeNav')?.addEventListener('click',goHome);
 $('brandHome')?.addEventListener('click',goHome);
+// FAQ accordion
+document.querySelectorAll('.faq-question').forEach(btn=>btn.addEventListener('click',()=>{
+  const item=btn.closest('.faq-item'), answer=item?.querySelector('.faq-answer'), isOpen=item?.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(openItem=>{if(openItem!==item){openItem.classList.remove('open');const q=openItem.querySelector('.faq-question'),a=openItem.querySelector('.faq-answer');q?.setAttribute('aria-expanded','false');if(q?.querySelector('b'))q.querySelector('b').textContent='+';if(a)a.hidden=true;}});
+  if(!item||!answer)return; item.classList.toggle('open',!isOpen); btn.setAttribute('aria-expanded',String(!isOpen)); if(btn.querySelector('b'))btn.querySelector('b').textContent='+'; answer.hidden=isOpen;
+}));
+// Close mobile navigation after a normal section link is selected.
+document.querySelectorAll('.main-nav a').forEach(link=>link.addEventListener('click',()=>document.querySelector('.main-nav')?.classList.remove('mobile-open')));
 const allToolsToggle=$('allToolsToggle'), allToolsDropdown=$('allToolsDropdown');
 function populateAllToolsMenu(){
   if(!allToolsDropdown)return;

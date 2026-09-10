@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=33.1">
+<link rel="stylesheet" href="style.css?v=34.1">
 </head>
 <body>
 <header class="topbar" id="home">
@@ -23,6 +23,7 @@
     <a href="#tools" class="nav-link">Tools</a>
     <a href="#how" class="nav-link">How it works</a>
     <a href="#privacy" class="nav-link">Privacy</a>
+    <a href="#faqs" class="nav-link">FAQs</a>
     <a href="#about" class="nav-link">About</a>
   </nav>
   <div class="header-actions">
@@ -102,6 +103,40 @@
   </div>
 </section>
 
+
+<section class="faq-section" id="faqs">
+  <div class="faq-wrap">
+    <div class="center-title"><span>FAQS</span><h2>Questions, answered simply.</h2><p>Here is how KwikToolForAll handles your files and why it works this way.</p></div>
+    <div class="faq-list" role="list">
+      <article class="faq-item" role="listitem">
+        <button class="faq-question" type="button" aria-expanded="false"><span>What happens to my files when I use KwikToolForAll?</span><b aria-hidden="true">+</b></button>
+        <div class="faq-answer" hidden><p>For the current file-processing tools, your selected files are processed directly in your browser whenever the task can run locally. The files are not sent to a KwikToolForAll server for processing or stored in a KwikToolForAll database.</p></div>
+      </article>
+      <article class="faq-item" role="listitem">
+        <button class="faq-question" type="button" aria-expanded="false"><span>Does KwikToolForAll store my files?</span><b aria-hidden="true">+</b></button>
+        <div class="faq-answer" hidden><p>No. The current PDF and image tools are designed for local browser processing and do not intentionally upload or retain the files you select. Your browser may temporarily hold file data in memory while a task is running.</p></div>
+      </article>
+      <article class="faq-item" role="listitem">
+        <button class="faq-question" type="button" aria-expanded="false"><span>How can the site process files without storing them?</span><b aria-hidden="true">+</b></button>
+        <div class="faq-answer" hidden><p>Your browser can read files from your device and run the required processing code locally. The result can then be generated in the browser and downloaded back to your device without the original file needing to be uploaded to a processing server.</p></div>
+      </article>
+      <article class="faq-item" role="listitem">
+        <button class="faq-question" type="button" aria-expanded="false"><span>Is my data sent to the cloud?</span><b aria-hidden="true">+</b></button>
+        <div class="faq-answer" hidden><p>The current file-processing workflows do not require your PDF or image to be uploaded to cloud storage for processing. We use browser-first processing whenever practical, while external website resources such as libraries may still be loaded by the page.</p></div>
+      </article>
+      <article class="faq-item" role="listitem">
+        <button class="faq-question" type="button" aria-expanded="false"><span>Why was KwikToolForAll created?</span><b aria-hidden="true">+</b></button>
+        <div class="faq-answer" hidden><p>KwikToolForAll was created to put practical everyday file utilities in one simple workspace—without unnecessary installations, complicated interfaces or unnecessary file uploading.</p></div>
+      </article>
+      <article class="faq-item" role="listitem">
+        <button class="faq-question" type="button" aria-expanded="false"><span>Can I use it for confidential documents?</span><b aria-hidden="true">+</b></button>
+        <div class="faq-answer" hidden><p>Browser-first processing helps keep the current tool files on your device, but you should always follow your organization's security and data-handling policies when working with confidential, regulated or highly sensitive information.</p></div>
+      </article>
+    </div>
+    <div class="faq-note"><span>🔒</span><div><b>Browser-first by design</b><small>We explain our file-handling approach clearly so you can make an informed choice before using a tool.</small></div></div>
+  </div>
+</section>
+
 <section class="final-cta">
   <span>THE TOOLBOX IS JUST GETTING STARTED</span>
   <h2>Find a tool.<br><strong>Get the job done.</strong></h2>
@@ -111,7 +146,7 @@
 
 <footer>
   <div class="footer-brand"><span class="brand-logo small-logo"><svg viewBox="0 0 48 48"><defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#fg)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg></span><div><b>KwikToolForAll</b><small>Everyday file tools</small></div></div>
-  <div class="footer-links"><a href="#tools">Tools</a><a href="#privacy">Privacy</a><a href="#about">About</a></div>
+  <div class="footer-links"><a href="#tools">Tools</a><a href="#faqs">FAQs</a><a href="#privacy">Privacy</a><a href="#about">About</a></div>
   <p>Simple tools. Real value.</p>
 </footer>
 <div class="toast" id="toast" role="status"></div>
