@@ -228,7 +228,94 @@ function renderMergeTool(body){
   run.onclick=async()=>{try{if(sources.length<2)throw Error('Add at least two PDFs.');run.disabled=true;updateStatus('Merging PDFs…');const out=await PDFLib.PDFDocument.create();for(let i=0;i<pages.length;i++){const item=pages[i],src=sources.find(s=>s.id===item.sourceId),copied=await out.copyPages(src.pdf,[item.srcPage]),pg=copied[0];if(item.rotation)pg.setRotation(PDFLib.degrees(item.rotation));out.addPage(pg);updateStatus(`Merging page ${i+1} of ${pages.length}…`)}const name=($('mergeFilename').value.trim()||'KwikToolForAll_Merged').replace(/\.pdf$/i,'')+'.pdf';downloadBlob(new Blob([await out.save({useObjectStreams:true})],{type:'application/pdf'}),name);showUtilitySuccess(`Merge complete. ${pages.length} pages from ${sources.length} PDFs were combined and downloaded.`)}catch(e){console.error(e);showToast('Could not merge those PDFs. Please check the files.');updateStatus('Merge failed.')}finally{run.disabled=false}};
   renderSources();updateSummary();updateStatus('Choose at least 2 PDFs.')
 }
-function renderSplitTool(body){body.innerHTML=utilityUploadMarkup('split',false)+`<div class="utility-field"><label>Pages or ranges <input id="splitRange" type="text" placeholder="Example: 1, 3-5, 8"></label><small>Use commas for separate pages and hyphens for ranges.</small></div><div class="utility-actions"><button class="primary-action" id="splitRun" disabled>Split PDF →</button></div>`;let file=null;const input=$('utilityFiles'),run=$('splitRun'),sync=()=>run.disabled=!file||!$('splitRange').value.trim();input.onchange=()=>{file=input.files[0]||null;$('utilityFileList').innerHTML=file?`<div class="utility-file"><span>1</span><div><b>${escapeHtml(file.name)}</b><small>${formatBytes(file.size)}</small></div></div>`:'';sync();$('utilityStatus').textContent=file?'Enter pages or ranges.':'Choose a PDF.'};$('splitRange').oninput=sync;run.onclick=async()=>{try{run.disabled=true;const src=await PDFLib.PDFDocument.load(await file.arrayBuffer()),pages=parseRanges($('splitRange').value,src.getPageCount());if(!pages.length)throw Error('No valid pages');const out=await PDFLib.PDFDocument.create();(await out.copyPages(src,pages.map(n=>n-1))).forEach(p=>out.addPage(p));downloadBlob(new Blob([await out.save({useObjectStreams:true})],{type:'application/pdf'}),'KwikToolForAll_Split.pdf');showUtilitySuccess('Split complete. Your selected pages are now downloaded.')}catch(e){console.error(e);showToast('Please check the page numbers or PDF.');$('utilityStatus').textContent='Split failed.'}finally{run.disabled=false}}}
+function renderSplitTool(body){
+  body.innerHTML=`
+    <div class="split-upload" id="splitDropzone">
+      <div class="utility-upload-icon">↥</div><h3>Drop a PDF here</h3>
+      <p>Choose one PDF, preview its pages, then select exactly how you want to split it.</p>
+      <label class="choose-files">Choose PDF<input id="utilityFiles" type="file" accept="application/pdf" hidden></label>
+      <small>Files stay in your browser and are processed locally.</small>
+    </div>
+    <div class="split-file-summary" id="splitFileSummary" hidden></div>
+    <div class="split-modes" id="splitModes" hidden>
+      <button type="button" class="split-mode active" data-split-mode="extract"><b>Extract pages</b><small>Make one PDF from selected pages.</small></button>
+      <button type="button" class="split-mode" data-split-mode="every"><b>Every page</b><small>Create one PDF per page.</small></button>
+      <button type="button" class="split-mode" data-split-mode="ranges"><b>Custom ranges</b><small>Create multiple PDFs from ranges.</small></button>
+      <button type="button" class="split-mode" data-split-mode="after"><b>Split after pages</b><small>Choose where each part ends.</small></button>
+    </div>
+    <div class="split-workspace" id="splitWorkspace" hidden>
+      <div class="split-page-head"><div><strong>Pages</strong><span id="splitSelectionHint">Click pages to select them. Drag selected pages to change extraction order.</span></div><div class="split-page-actions"><button type="button" class="merge-secondary" id="splitSelectAll">Select all</button><button type="button" class="merge-secondary" id="splitClearSelection">Clear</button></div></div>
+      <div class="split-pages" id="splitPages"><div class="merge-empty">Pages will appear here.</div></div>
+      <div id="splitControls"></div>
+    </div>
+    <div class="split-output" id="splitOutput" hidden>
+      <label>Output filename / prefix<input id="splitFilename" value="KwikToolForAll_Split" maxlength="100"></label>
+      <div class="split-output-meta" id="splitOutputMeta"></div>
+    </div>
+    <div class="utility-actions"><button class="primary-action" id="splitRun" disabled>Split PDF →</button></div>`;
+
+  let file=null,pdf=null,pages=[],selected=new Set(),mode='extract',dragPage=null;
+  const input=$('utilityFiles'),drop=$('splitDropzone'),run=$('splitRun'),pagesEl=$('splitPages');
+  const status=t=>{$('utilityStatus').textContent=t};
+  const modeName=()=>({extract:'Extract pages',every:'Every page',ranges:'Custom ranges',after:'Split after pages'})[mode];
+  const selectedOrdered=()=>pages.filter(p=>selected.has(p.id));
+  const updateMeta=()=>{
+    if(!pdf)return;
+    const count=selected.size;
+    $('splitSelectionHint').textContent=mode==='extract'?'Click pages to select them. Drag selected pages to change extraction order.':mode==='every'?`All ${pages.length} pages will become separate PDFs.`:mode==='ranges'?'Enter one or more ranges below, for example 1-3, 4-7.':'Select the pages after which a new PDF should start.';
+    $('splitOutputMeta').textContent=mode==='extract'?`${count} selected · ${pages.length} total pages`:mode==='every'?`${pages.length} output PDFs · ${pages.length} total pages`:mode==='after'?`${selected.size} split points · ${pages.length} total pages`:'Add ranges to preview output count.';
+    if(mode==='extract')run.disabled=!count;
+    else if(mode==='after')run.disabled=!selected.size;
+  };
+  const renderPages=()=>{
+    pagesEl.innerHTML='';
+    pages.forEach((page,i)=>{
+      const card=document.createElement('article');card.className=`split-page-card ${selected.has(page.id)?'selected':''}`;card.draggable=mode==='extract';card.dataset.id=page.id;
+      card.innerHTML=`<div class="split-page-thumb"><span class="merge-page-loader">…</span></div><div class="split-page-info"><b>Page ${i+1}</b><small>${selected.has(page.id)?'Selected':'Click to select'}</small></div><div class="split-page-mark">${selected.has(page.id)?'✓':''}</div>`;
+      card.onclick=e=>{if(e.target.closest('button'))return;if(selected.has(page.id))selected.delete(page.id);else selected.add(page.id);renderPages();updateControls();updateMeta();status(`${selected.size} page${selected.size===1?'':'s'} selected.`)};
+      card.ondragstart=e=>{dragPage=page.id;card.classList.add('dragging');e.dataTransfer.effectAllowed='move'};
+      card.ondragend=()=>{dragPage=null;pagesEl.querySelectorAll('.split-page-card').forEach(x=>x.classList.remove('drag-over'))};
+      card.ondragover=e=>{e.preventDefault();if(dragPage&&dragPage!==page.id)card.classList.add('drag-over')};
+      card.ondragleave=()=>card.classList.remove('drag-over');
+      card.ondrop=e=>{e.preventDefault();const from=pages.findIndex(p=>p.id===dragPage),to=pages.findIndex(p=>p.id===page.id);if(from<0||to<0||from===to)return;const moved=pages.splice(from,1)[0];pages.splice(to,0,moved);renderPages();updateControls();updateMeta();status('Page order updated.')};
+      pagesEl.appendChild(card);
+      pdf.getPage(page.num).then(pg=>{const vp=pg.getViewport({scale:.48}),canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);return pg.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise.then(()=>{if(!document.body.contains(card))return;const wrap=card.querySelector('.split-page-thumb');wrap.innerHTML='';wrap.appendChild(canvas)})}).catch(()=>{});
+    });
+  };
+  const renderControls=()=>{
+    const c=$('splitControls');
+    if(mode==='extract')c.innerHTML=`<div class="split-control-card"><strong>Selected pages</strong><div class="split-range-row"><input id="splitRange" type="text" placeholder="Example: 1, 3-5, 8"><button type="button" class="merge-secondary" id="splitApplyRange">Select pages</button></div><small>Use commas for separate pages and hyphens for ranges. Existing selection will be replaced.</small></div>`;
+    else if(mode==='every')c.innerHTML=`<div class="split-control-card"><strong>One PDF per page</strong><small>${pages.length} individual PDFs will be created and downloaded together as a ZIP file.</small></div>`;
+    else if(mode==='ranges')c.innerHTML=`<div class="split-control-card"><strong>Ranges</strong><div class="split-range-row"><input id="splitRanges" type="text" placeholder="Example: 1-3, 4-7, 8-12"><button type="button" class="merge-secondary" id="splitPreviewRanges">Preview</button></div><small>Each range becomes its own PDF. Overlapping ranges are allowed.</small><div id="splitRangePreview" class="split-range-preview"></div></div>`;
+    else c.innerHTML=`<div class="split-control-card"><strong>Split after selected pages</strong><small>Select pages above. A new part starts after each selected page.</small><div id="splitAfterPreview" class="split-range-preview"></div></div>`;
+    if($('splitApplyRange'))$('splitApplyRange').onclick=()=>{try{const nums=parseRanges($('splitRange').value,pages.length);selected.clear();nums.forEach(n=>selected.add(pages[n-1].id));renderPages();updateControls();updateMeta();status(`${nums.length} pages selected.`)}catch(e){showToast('Please check the page numbers.')}};
+    if($('splitPreviewRanges'))$('splitPreviewRanges').onclick=()=>previewRanges();
+    if($('splitRanges'))$('splitRanges').oninput=previewRanges;
+  };
+  const updateControls=()=>{
+    if(mode==='after'){const nums=pages.map((p,i)=>selected.has(p.id)?i+1:null).filter(Boolean);$('splitAfterPreview').innerHTML=nums.length?buildParts(nums,pages.length):'<span>No split points selected.</span>';run.disabled=!nums.length}
+    else if(mode==='ranges'){previewRanges();}
+    else if(mode==='extract')run.disabled=!selected.size;
+    else run.disabled=!file;
+  };
+  const buildParts=(cuts,total)=>{let prev=1,out='';cuts.forEach((end,i)=>{if(end<prev)return;out+=`<span>Part ${i+1}: ${prev}–${end}</span>`;prev=end+1});if(prev<=total)out+=`<span>Part ${cuts.length+1}: ${prev}–${total}</span>`;return out};
+  const previewRanges=()=>{const el=$('splitRangePreview');if(!el)return;const text=$('splitRanges').value.trim();if(!text){el.innerHTML='<span>Enter ranges to see the output parts.</span>';run.disabled=true;return}const raw=text.split(',').map(x=>x.trim()).filter(Boolean),valid=[];raw.forEach(x=>{const m=x.match(/^(\d+)\s*-\s*(\d+)$/);if(m){let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];if(a>=1&&b<=pages.length)valid.push([a,b])}});el.innerHTML=valid.length?valid.map((r,i)=>`<span>Part ${i+1}: ${r[0]}–${r[1]}</span>`).join(''):'<span>Enter valid ranges within the PDF.</span>';run.disabled=!valid.length;updateMeta()};
+  const addFile=async f=>{if(!f||(!f.type&&!/\.pdf$/i.test(f.name)))return;try{status('Reading PDF…');file=f;const bytes=await f.arrayBuffer();pdf=await pdfjsLib.getDocument({data:bytes.slice(0)}).promise;pages=Array.from({length:pdf.numPages},(_,i)=>({id:`sp-${Date.now()}-${i}-${Math.random().toString(36).slice(2)}`,num:i+1}));selected.clear();$('splitFileSummary').hidden=false;$('splitFileSummary').innerHTML=`<strong>${escapeHtml(f.name)}</strong><span>${pdf.numPages} pages · ${formatBytes(f.size)}</span><button type="button" class="text-btn" id="splitReplace">Replace</button>`;$('splitReplace').onclick=()=>input.click();$('splitModes').hidden=false;$('splitWorkspace').hidden=false;$('splitOutput').hidden=false;renderPages();renderControls();updateControls();updateMeta();status(`${pdf.numPages} pages ready.`)}catch(e){console.error(e);showToast('Could not read this PDF.');status('Could not read the PDF.')}};
+  input.onchange=()=>{const f=input.files[0];input.value='';addFile(f)};drop.ondragover=e=>{e.preventDefault();drop.classList.add('dragover')};drop.ondragleave=()=>drop.classList.remove('dragover');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');addFile([...e.dataTransfer.files][0])};
+  body.querySelectorAll('[data-split-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.splitMode;body.querySelectorAll('[data-split-mode]').forEach(x=>x.classList.toggle('active',x===b));renderControls();updateControls();updateMeta();status(`${modeName()} selected.`)});
+  $('splitSelectAll').onclick=()=>{if(selected.size===pages.length)selected.clear();else pages.forEach(p=>selected.add(p.id));renderPages();updateControls();updateMeta();status(selected.size===pages.length?'All pages selected.':'Selection cleared.')};
+  $('splitClearSelection').onclick=()=>{selected.clear();renderPages();updateControls();updateMeta();status('Selection cleared.')};
+  run.onclick=async()=>{
+    try{run.disabled=true;status('Preparing split…');const src=await PDFLib.PDFDocument.load(await file.arrayBuffer(),{updateMetadata:false});const base=($('splitFilename').value.trim()||'KwikToolForAll_Split').replace(/\.pdf$/i,'');
+      const makePdf=async nums=>{const out=await PDFLib.PDFDocument.create();const copied=await out.copyPages(src,nums.map(n=>n-1));copied.forEach(p=>out.addPage(p));return new Blob([await out.save({useObjectStreams:true})],{type:'application/pdf'})};
+      if(mode==='extract'){const nums=selectedOrdered().map(p=>p.num);downloadBlob(await makePdf(nums),`${base}.pdf`);showUtilitySuccess(`Extracted ${nums.length} selected pages into one PDF.`)}
+      else if(mode==='every'){if(!window.JSZip)throw Error('ZIP library unavailable');const zip=new JSZip();for(let i=1;i<=src.getPageCount();i++){status(`Creating page ${i} of ${src.getPageCount()}…`);zip.file(`${base}_Page_${String(i).padStart(2,'0')}.pdf`,await makePdf([i]))}const blob=await zip.generateAsync({type:'blob'});downloadBlob(blob,`${base}_AllPages.zip`);showUtilitySuccess(`Created ${src.getPageCount()} individual PDFs and packaged them into one ZIP.`)}
+      else if(mode==='ranges'){const raw=$('splitRanges').value.split(',').map(x=>x.trim()).filter(Boolean),ranges=[];for(const x of raw){const m=x.match(/^(\d+)\s*-\s*(\d+)$/);if(!m)continue;let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];if(a>=1&&b<=src.getPageCount())ranges.push([a,b])}if(!ranges.length)throw Error('No valid ranges');if(ranges.length===1){downloadBlob(await makePdf(Array.from({length:ranges[0][1]-ranges[0][0]+1},(_,i)=>ranges[0][0]+i)),`${base}_Part_01.pdf`);showUtilitySuccess('Created 1 PDF from the selected range.')}else{if(!window.JSZip)throw Error('ZIP library unavailable');const zip=new JSZip();for(let i=0;i<ranges.length;i++){const [a,b]=ranges[i];status(`Creating part ${i+1} of ${ranges.length}…`);zip.file(`${base}_Part_${String(i+1).padStart(2,'0')}.pdf`,await makePdf(Array.from({length:b-a+1},(_,j)=>a+j)))}downloadBlob(await zip.generateAsync({type:'blob'}),`${base}_Parts.zip`);showUtilitySuccess(`Created ${ranges.length} PDF parts and packaged them into one ZIP.`)}}
+      else {const cuts=pages.map((p,i)=>selected.has(p.id)?i+1:null).filter(Boolean).sort((a,b)=>a-b);if(!cuts.length)throw Error('Select split points');const parts=[];let prev=1;cuts.forEach(end=>{if(end>=prev){parts.push([prev,end]);prev=end+1}});if(prev<=src.getPageCount())parts.push([prev,src.getPageCount()]);if(parts.length===1){downloadBlob(await makePdf(Array.from({length:parts[0][1]-parts[0][0]+1},(_,i)=>parts[0][0]+i)),`${base}_Part_01.pdf`);showUtilitySuccess('Created 1 PDF part.')}else{if(!window.JSZip)throw Error('ZIP library unavailable');const zip=new JSZip();for(let i=0;i<parts.length;i++){status(`Creating part ${i+1} of ${parts.length}…`);const [a,b]=parts[i];zip.file(`${base}_Part_${String(i+1).padStart(2,'0')}.pdf`,await makePdf(Array.from({length:b-a+1},(_,j)=>a+j)))}downloadBlob(await zip.generateAsync({type:'blob'}),`${base}_Parts.zip`);showUtilitySuccess(`Created ${parts.length} PDF parts and packaged them into one ZIP.`)}}
+    }catch(e){console.error(e);showToast('Could not split this PDF. Please check the selection.');status('Split failed.')}finally{run.disabled=mode==='extract'?!selected.size:mode==='after'?!selected.size:mode==='ranges'?!($('splitRanges')?.value.trim()):!file}
+  };
+}
+
 function parseRanges(text,total){const set=new Set();for(const part of text.split(',')){const x=part.trim();if(/^\d+$/.test(x)){const n=+x;if(n>=1&&n<=total)set.add(n)}else{const m=x.match(/^(\d+)\s*-\s*(\d+)$/);if(m){let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];for(let n=a;n<=b&&n<=total;n++)if(n>=1)set.add(n)}}}return [...set].sort((a,b)=>a-b)}
 function imageToolMarkup(title,desc){return `<div class="image-tool-grid"><div class="utility-upload"><div class="utility-upload-icon">↥</div><h3>Upload an image</h3><p>${desc}</p><label class="choose-files">Choose image<input id="utilityImageFile" type="file" accept="image/jpeg,image/png,image/webp" hidden></label></div><div class="utility-preview-panel"><div class="utility-preview-empty" id="utilityImagePreview">Preview will appear here.</div></div></div>`}
 function loadImageFile(file,cb){const url=URL.createObjectURL(file),img=new Image();img.onload=()=>cb(img,url);img.onerror=()=>{URL.revokeObjectURL(url);showToast('Could not read that image.')};img.src=url}
