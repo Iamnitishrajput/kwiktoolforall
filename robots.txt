@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://iamnitishrajput.github.io/kwiktoolforall/sitemap.xml
