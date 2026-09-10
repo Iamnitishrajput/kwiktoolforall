@@ -395,10 +395,107 @@ function renderResizeTool(body){
   document.querySelectorAll('.photo-units .unit').forEach(b=>b.onclick=()=>{const old=unit;unit=b.dataset.unit;const dpi=+$id('photoDpi').value;const w=pxToUnit(toPx(+$id('photoWidth').value,old,dpi),unit,dpi),h=pxToUnit(toPx(+$id('photoHeight').value,old,dpi),unit,dpi);$id('photoWidth').value=+w.toFixed(2);$id('photoHeight').value=+h.toFixed(2);document.querySelectorAll('.photo-units .unit').forEach(x=>x.classList.toggle('active',x===b));updateFrame()});
   [$id('photoWidth'),$id('photoHeight'),$id('photoDpi')].forEach(x=>x.oninput=()=>updateFrame());$id('photoQuality').oninput=()=>{$id('photoQualityValue').textContent=$id('photoQuality').value+'%'};$id('photoPaper').onchange=updatePrintMeta;$id('photoGap').oninput=updatePrintMeta;$id('photoMargin').oninput=updatePrintMeta;$id('photoCopies').oninput=updatePrintMeta;
   $id('photoZoom').oninput=e=>{zoom=+e.target.value;drawCanvas()};$id('photoZoomIn').onclick=()=>{$id('photoZoom').value=Math.min(3,zoom+.1);zoom=+$id('photoZoom').value;drawCanvas()};$id('photoZoomOut').onclick=()=>{$id('photoZoom').value=Math.max(1,zoom-.1);zoom=+$id('photoZoom').value;drawCanvas()};$id('photoRotate').onclick=()=>{rotation=(rotation+90)%360;drawCanvas()};$id('photoReset').onclick=()=>{zoom=1;rotation=0;offsetX=0;offsetY=0;$id('photoZoom').value=1;drawCanvas()};
-  const cw=$id('photoCanvasWrap');cw.onpointerdown=e=>{if(!img)return;drag={x:e.clientX,y:e.clientY,ox:offsetX,oy:offsetY};cw.setPointerCapture(e.pointerId)};cw.onpointermove=e=>{if(!drag)return;offsetX=drag.ox+e.clientX-drag.x;offsetY=drag.oy+e.clientY-drag.y;drawCanvas()};cw.onpointerup=()=>drag=null;cw.onpointercancel=()=>drag=null;window.addEventListener('resize',()=>{if(img)updateFrame()});
+  const cw=$id('photoCanvasWrap');let drawQueued=false,pendingPoint=null;const queueDraw=()=>{if(drawQueued)return;drawQueued=true;requestAnimationFrame(()=>{drawQueued=false;drawCanvas()})};cw.onpointerdown=e=>{if(!img)return;drag={x:e.clientX,y:e.clientY,ox:offsetX,oy:offsetY};cw.setPointerCapture(e.pointerId)};cw.onpointermove=e=>{if(!drag)return;pendingPoint=e;offsetX=drag.ox+e.clientX-drag.x;offsetY=drag.oy+e.clientY-drag.y;queueDraw()};cw.onpointerup=()=>{drag=null;pendingPoint=null};cw.onpointercancel=()=>{drag=null;pendingPoint=null};let resizeTimer;window.addEventListener('resize',()=>{if(!img)return;clearTimeout(resizeTimer);resizeTimer=setTimeout(updateFrame,100)});
   $id('photoDownload').onclick=downloadCurrent;$id('photoPrint').onclick=makePrintSheet;$id('utilityStatus').textContent='Choose a photo size preset or create a custom size.';
 }
-function renderCompressTool(body){body.innerHTML=imageToolMarkup('Compress Image','Choose a compression level. Your original stays on your device.')+`<div class="compression-choices"><button type="button" class="compression-choice active" data-level="light"><b>Quality-first</b><small>Light compression · keeps the original look.</small></button><button type="button" class="compression-choice" data-level="balanced"><b>Balanced</b><small>Good quality with a useful size reduction.</small></button><button type="button" class="compression-choice" data-level="small"><b>Smaller file</b><small>Stronger compression for sharing and uploads.</small></button></div><div class="utility-options"><label>Format<select id="compressFormat"><option value="image/jpeg">JPEG · best for photos</option><option value="image/png">PNG</option></select></label></div><div class="utility-actions"><button class="primary-action" id="compressRun" disabled>Compress & Download →</button></div>`;let img=null,level='light';const input=$('utilityImageFile'),run=$('compressRun');body.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>{level=b.dataset.level;body.querySelectorAll('[data-level]').forEach(x=>x.classList.toggle('active',x===b));if(img)run.disabled=false;$('utilityStatus').textContent=`${b.querySelector('b').textContent} selected.`});input.onchange=()=>{const file=input.files[0];if(!file)return;loadImageFile(file,(im,u)=>{img=im;$('utilityImagePreview').innerHTML=`<img src="${u}" alt="Preview">`;run.disabled=false;$('utilityStatus').textContent=`Image ready · ${formatBytes(file.size)} · ${im.naturalWidth} × ${im.naturalHeight}`})};run.onclick=async()=>{try{const cfg={light:{q:.9,max:Math.max(img.naturalWidth,2400)},balanced:{q:.76,max:2400},small:{q:.58,max:1800}}[level],scale=Math.min(1,cfg.max/img.naturalWidth),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale)),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);const type=$('compressFormat').value;downloadBlob(await canvasBlob(c,type,cfg.q),`KwikToolForAll_Compressed.${type==='image/png'?'png':'jpg'}`);showUtilitySuccess(`${level==='light'?'Quality-first':level==='balanced'?'Balanced':'Smaller file'} compression complete. Your compressed image is now downloaded.`)}catch(e){showToast('Could not compress this image.')}}}
+function renderCompressTool(body){
+  body.innerHTML=`
+  <div class="compress-image-shell">
+    <div class="compress-image-upload" id="compressImageDropzone">
+      <div class="utility-upload-icon">⌁</div>
+      <h3>Drop your images here</h3>
+      <p>Compress photos for sharing, websites and uploads. Your files stay on your device.</p>
+      <label class="choose-files">Choose images<input id="utilityImageFile" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+      <small>JPG, PNG and WebP · processed locally in your browser</small>
+    </div>
+    <div class="compress-image-files" id="compressImageFiles" hidden></div>
+    <div class="compress-image-layout" id="compressImageLayout" hidden>
+      <section class="compress-image-preview-card">
+        <div class="compress-card-head"><div><strong>Preview</strong><small id="compressImagePreviewMeta">Choose an image to preview.</small></div><button type="button" class="merge-secondary" id="compressImageReplace">Add more</button></div>
+        <div class="compress-image-preview" id="compressImagePreview"><span>Preview will appear here.</span></div>
+      </section>
+      <section class="compress-image-settings">
+        <div class="compress-settings-card">
+          <div class="compress-card-title">Compression</div>
+          <div class="compression-choices compact-compression">
+            <button type="button" class="compression-choice active" data-image-level="quality"><b>Quality-first</b><small>Light reduction · best detail</small></button>
+            <button type="button" class="compression-choice" data-image-level="balanced"><b>Balanced <em>Recommended</em></b><small>Good quality and size</small></button>
+            <button type="button" class="compression-choice" data-image-level="small"><b>Smaller file</b><small>Stronger reduction</small></button>
+          </div>
+          <label class="compress-field">Quality <input id="imageQuality" type="range" min="35" max="100" value="82"><span class="range-value" id="imageQualityValue">82%</span></label>
+        </div>
+        <div class="compress-settings-card">
+          <div class="compress-card-title">Output</div>
+          <div class="compress-two-col">
+            <label class="compress-field">Format<select id="imageCompressFormat"><option value="auto">Keep best format</option><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select></label>
+            <label class="compress-field">Maximum size<select id="imageTargetSize"><option value="0">No target</option><option value="51200">50 KB</option><option value="102400">100 KB</option><option value="204800">200 KB</option><option value="512000">500 KB</option><option value="1048576">1 MB</option><option value="custom">Custom</option></select></label>
+          </div>
+          <div class="compress-two-col custom-image-target" id="customImageTargetWrap" hidden>
+            <label class="compress-field">Custom target (KB)<input id="imageCustomTarget" type="number" min="10" step="10" value="200"></label>
+          </div>
+          <div class="compress-two-col">
+            <label class="compress-field">Maximum width (px)<input id="imageMaxWidth" type="number" min="0" step="1" placeholder="No limit"></label>
+            <label class="compress-field">Maximum height (px)<input id="imageMaxHeight" type="number" min="0" step="1" placeholder="No limit"></label>
+          </div>
+          <label class="check-line compress-check"><input id="imageNoEnlarge" type="checkbox" checked> Don't enlarge smaller images</label>
+          <small class="compress-note">For PNG, target size may require choosing JPG or WebP because PNG is lossless.</small>
+        </div>
+      </section>
+    </div>
+    <div class="compress-image-results" id="compressImageResults" hidden></div>
+    <div class="utility-actions compress-image-actions"><button class="primary-action" id="compressImagesRun" disabled>Compress images →</button></div>
+  </div>`;
+
+  let files=[],level='balanced',busy=false;
+  const input=$('utilityImageFile'),drop=$('compressImageDropzone'),layout=$('compressImageLayout'),list=$('compressImageFiles'),run=$('compressImagesRun');
+  const settings={quality:{q:.92,maxScale:1},balanced:{q:.80,maxScale:.9},small:{q:.62,maxScale:.72}};
+  const extFor=type=>type==='image/png'?'png':type==='image/webp'?'webp':'jpg';
+  const selectedQuality=()=>Math.max(.35,Math.min(1,(+$('imageQuality').value||82)/100));
+  const targetBytes=()=>{const v=$('imageTargetSize').value;if(v==='custom')return Math.max(10240,(+$('imageCustomTarget').value||200)*1024);return +v||0};
+  const outputType=(file)=>{const choice=$('imageCompressFormat').value;if(choice!=='auto')return choice;if(file.type==='image/png')return 'image/webp';return file.type||'image/jpeg'};
+  const getDims=(im)=>{let w=im.naturalWidth||im.width,h=im.naturalHeight||im.height,mw=+$('imageMaxWidth').value||0,mh=+$('imageMaxHeight').value||0,scale=1;if(mw)scale=Math.min(scale,mw/w);if(mh)scale=Math.min(scale,mh/h);if($('imageNoEnlarge').checked)scale=Math.min(1,scale);return{w:Math.max(1,Math.round(w*scale)),h:Math.max(1,Math.round(h*scale))}};
+  const drawPreview=async(file)=>{const url=URL.createObjectURL(file);const im=new Image();await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src=url});const d=getDims(im);$('compressImagePreview').innerHTML=`<img src="${url}" alt="Image preview">`;$('compressImagePreviewMeta').textContent=`${formatBytes(file.size)} · ${im.naturalWidth} × ${im.naturalHeight}px · output up to ${d.w} × ${d.h}px`;URL.revokeObjectURL(url)};
+  const renderFiles=()=>{list.hidden=!files.length;layout.hidden=!files.length;run.disabled=!files.length||busy;list.innerHTML=files.map((f,i)=>`<div class="compress-image-file"><span class="compress-file-icon">IMG</span><div><b title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</b><small>${formatBytes(f.size)} · ${f.type.split('/')[1]?.toUpperCase()||'IMAGE'}</small></div><button type="button" class="text-btn" data-remove-image="${i}" aria-label="Remove ${escapeHtml(f.name)}">Remove</button></div>`).join('');if(files[0])drawPreview(files[0]).catch(()=>{});run.textContent=files.length>1?`Compress ${files.length} images →`:'Compress image →'};
+  const addFiles=chosen=>{const valid=[...chosen].filter(f=>/^image\/(jpeg|png|webp)$/i.test(f.type));if(valid.length<chosen.length)showToast('Only JPG, PNG and WebP images are supported.');files.push(...valid);renderFiles();$('utilityStatus').textContent=files.length?`${files.length} image${files.length===1?'':'s'} ready.`:'Ready.'};
+  input.onchange=()=>{addFiles(input.files);input.value=''};$('compressImageReplace').onclick=()=>input.click();
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('dragover')};drop.ondragleave=()=>drop.classList.remove('dragover');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');addFiles(e.dataTransfer.files)};
+  list.onclick=e=>{const b=e.target.closest('[data-remove-image]');if(!b)return;files.splice(+b.dataset.removeImage,1);renderFiles()};
+  body.querySelectorAll('[data-image-level]').forEach(b=>b.onclick=()=>{level=b.dataset.imageLevel;body.querySelectorAll('[data-image-level]').forEach(x=>x.classList.toggle('active',x===b));$('imageQuality').value=Math.round(settings[level].q*100);$('imageQualityValue').textContent=$('imageQuality').value+'%';$('utilityStatus').textContent=`${b.querySelector('b').textContent} selected.`});
+  $('imageQuality').oninput=()=>{$('imageQualityValue').textContent=$('imageQuality').value+'%'};
+  $('imageTargetSize').onchange=()=>{$('customImageTargetWrap').hidden=$('imageTargetSize').value!=='custom'};
+  ['imageMaxWidth','imageMaxHeight','imageCustomTarget'].forEach(id=>$(id).oninput=()=>{if(files[0])drawPreview(files[0]).catch(()=>{})});
+
+  async function encode(im,w,h,type,q){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{alpha:type!=='image/jpeg'});if(type==='image/jpeg'){ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h)}ctx.drawImage(im,0,0,w,h);await new Promise(r=>requestAnimationFrame(r));return canvasBlob(c,type,q)}
+  async function compressFile(file,index,total){
+    const url=URL.createObjectURL(file),im=new Image();
+    try{await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src=url});
+      const dims=getDims(im);let type=outputType(file),target=targetBytes(),baseQ=selectedQuality(),cfg=settings[level];
+      let w=Math.max(1,Math.round(dims.w*cfg.maxScale)),h=Math.max(1,Math.round(dims.h*cfg.maxScale));
+      if(level==='quality'){w=dims.w;h=dims.h}
+      let best=null,qualities=target?[baseQ,.9,.82,.74,.66,.58,.5,.42,.35]:[baseQ];
+      if(target && type==='image/png')type='image/webp';
+      if(target){for(let qi=0;qi<qualities.length;qi++){const b=await encode(im,w,h,type,qualities[qi]);if(!best||b.size<best.size)best=b;if(b.size<=target){best=b;break}await new Promise(r=>setTimeout(r,0))}
+        if(best.size>target){let attempts=0;while(attempts<3&&best.size>target&&w>320&&h>320){w=Math.max(320,Math.round(w*.85));h=Math.max(320,Math.round(h*.85));const b=await encode(im,w,h,type,.5);if(b.size<best.size)best=b;attempts++}}
+      }else best=await encode(im,w,h,type,baseQ);
+      if(!best)throw Error('Compression failed');
+      // Compression must never silently produce a larger file. When the generated
+      // candidate is larger than the original, keep the original bytes instead.
+      const usedOriginal=best.size>=file.size;
+      if(usedOriginal){best=file;type=file.type||type}
+      const outputName=`KwikToolForAll_Compressed_${String(index+1).padStart(2,'0')}.${extFor(type)}`;
+      return {file,blob:best,w:usedOriginal?(im.naturalWidth||im.width):w,h:usedOriginal?(im.naturalHeight||im.height):h,type,name:outputName,saved:usedOriginal?0:Math.max(0,100*(1-best.size/file.size)),usedOriginal};
+    }finally{URL.revokeObjectURL(url)}
+  }
+  run.onclick=async()=>{if(!files.length||busy)return;busy=true;run.disabled=true;const results=[];try{for(let i=0;i<files.length;i++){ $('utilityStatus').textContent=`Compressing image ${i+1} of ${files.length}…`;results.push(await compressFile(files[i],i,files.length));await new Promise(r=>setTimeout(r,0)) }
+      const zip=window.JSZip?new JSZip():null;const listHtml=results.map(r=>`<div class="compress-result-row"><div><b>${escapeHtml(r.name)}</b><small>${formatBytes(r.file.size)} → ${formatBytes(r.blob.size)} · ${r.usedOriginal?'Already optimized':'-'+r.saved.toFixed(1)+'%'} · ${r.w} × ${r.h}px</small></div><button type="button" class="text-btn" data-download-result="${results.indexOf(r)}">Download</button></div>`).join('');
+      $('compressImageResults').hidden=false;$('compressImageResults').innerHTML=`<div class="compress-results-head"><div><strong>Compression complete</strong><small>${results.length} image${results.length===1?'':'s'} processed</small></div>${zip?'<button type="button" class="primary-action compact-download" id="downloadAllImages">Download all as ZIP →</button>':''}</div><div>${listHtml}</div>`;
+      results.forEach(r=>{if(zip)zip.file(r.name,r.blob)});
+      if(zip)$('downloadAllImages').onclick=async()=>{const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});downloadBlob(blob,'KwikToolForAll_Compressed_Images.zip')};
+      $('compressImageResults').querySelectorAll('[data-download-result]').forEach(b=>b.onclick=()=>{const r=results[+b.dataset.downloadResult];downloadBlob(r.blob,r.name)});
+      run.textContent='Compress more images →';run.disabled=false;$('utilityStatus').textContent='Compression complete. Review the results or download all as a ZIP.';
+    }catch(e){console.error(e);showToast('Could not compress one or more images.');$('utilityStatus').textContent='Compression failed. Try a different format or target size.';run.disabled=false}finally{busy=false}}
+}
+
 function canvasBlob(c,type,q){return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(Error('Encode failed')),type,q))}
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function showCompressPdfSuccess(originalSize,outputSize,pct,compressed){$('utilityBody').innerHTML=`<div class="utility-success compress-final-success"><div class="success-orbit"><div class="success-check" aria-hidden="true"></div></div><span class="success-eyebrow">DOWNLOAD COMPLETE</span><h3>${compressed?'PDF compressed<br><strong>successfully.</strong>':'PDF already<br><strong>optimized.</strong>'}</h3><div class="compress-final-stats"><div><span>Original</span><strong>${formatBytes(originalSize)}</strong></div><div><span>${compressed?'Compressed':'Downloaded'}</span><strong>${formatBytes(outputSize)}</strong></div><div><span>Saved</span><strong>${pct>0?pct.toFixed(1)+'%':'0%'}</strong></div></div><p class="success-sub">Please check your <strong>Downloads</strong> folder.</p><div class="privacy-confirm"><span class="privacy-confirm-icon" aria-hidden="true"></span><div><strong>Your privacy is protected</strong><span>Your PDF was processed locally in your browser and was not uploaded.</span></div></div><button type="button" class="reuse-tool" id="utilityReuse"><span>↻</span> Re-use the tool</button><small class="success-note">No account • No cloud storage • No file retained</small></div>`;$('utilityReuse').onclick=()=>openUtility(window.__utilityId)}
