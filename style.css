@@ -616,7 +616,7 @@ body.dark .tool-workspace{background:#101d34;color:#f3f6fc}.dark .workspace-clos
 @media(max-width:800px){.pdf-compress-grid{grid-template-columns:1fr}.compress-pdf-controls{grid-template-columns:1fr 1fr}.pdf-compression-choices{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.compress-pdf-controls{grid-template-columns:1fr}.compress-pdf-summary{grid-template-columns:1fr}.pdf-compression-choices{grid-template-columns:1fr}.compress-result-card{grid-template-columns:1fr 1fr}.result-arrow{display:none}.result-saving{padding-left:0;border-left:0;border-top:1px solid #e1e7ef;padding-top:8px}.compress-final-stats{grid-template-columns:1fr}}
 
-/* V27 — Compress PDF controls polish */
+/* V28 — Compress PDF controls polish */
 .compress-pdf-controls{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
