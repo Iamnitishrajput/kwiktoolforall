@@ -718,3 +718,48 @@ body.dark .tool-workspace{background:#101d34;color:#f3f6fc}.dark .workspace-clos
 .photo-print-card{display:flex;flex-direction:column;gap:14px}.photo-print-card>div:first-child strong,.photo-print-card>div:first-child small{display:block}.photo-print-card small{color:var(--muted,#667085);margin-top:4px}.photo-print-controls{display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr;gap:10px}.photo-print-controls label{display:flex;flex-direction:column;gap:6px;font-weight:650}.photo-print-meta{font-size:13px;color:var(--muted,#667085)}.photo-actions{display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:760px){.photo-purpose-tabs{grid-template-columns:1fr 1fr}.photo-preset-grid{grid-template-columns:1fr 1fr}.photo-editor-grid{grid-template-columns:1fr}.photo-canvas-wrap{height:320px}.photo-print-controls{grid-template-columns:1fr 1fr}.photo-actions{flex-direction:column}.photo-actions button{width:100%}}
 @media(max-width:460px){.photo-preset-grid{grid-template-columns:1fr}.photo-filebar{align-items:flex-start;gap:10px;flex-direction:column}.photo-crop-tools{flex-wrap:wrap}.photo-crop-tools input{min-width:120px}.photo-print-controls{grid-template-columns:1fr}.photo-purpose{font-size:12px}.photo-canvas-wrap{height:280px}}
+
+/* V30 Photo Size UI system — consistent fields, spacing and responsive layout */
+.utility-shell:has(.photo-tool-shell){width:min(1120px,calc(100vw - 32px));}
+.photo-tool-shell{gap:16px}
+.photo-purpose-tabs{gap:10px}
+.photo-purpose{min-height:46px;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1.2;transition:all .16s ease}
+.photo-preset-grid{gap:10px}
+.photo-preset{min-height:72px;display:flex;flex-direction:column;justify-content:center;transition:all .16s ease}
+.photo-editor-grid{grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:14px;align-items:start}
+.photo-crop-panel,.photo-settings-card,.photo-print-card{padding:18px;border-radius:18px;box-shadow:0 2px 12px rgba(24,42,72,.035)}
+.photo-panel-head{align-items:center;margin-bottom:10px}
+.photo-panel-head strong{font-size:15px}
+.photo-panel-head small{font-size:11px;line-height:1.4}
+.photo-canvas-wrap{height:330px;background:linear-gradient(135deg,#f4f6f9,#e9edf3);border:1px solid #e1e6ed}
+.photo-crop-tools{gap:7px}
+.photo-crop-tools button{height:40px;min-width:40px}
+.photo-crop-tools input{height:6px}
+.photo-settings-panel{gap:14px}
+.photo-setting-title{font-size:15px;margin-bottom:13px}
+.photo-two-col{gap:12px}
+.photo-settings-card label{font-size:11px;line-height:1.2;gap:7px;margin-bottom:13px;color:#34445e}
+.photo-settings-card input[type="number"],.photo-settings-card select,.photo-print-controls input,.photo-print-controls select{height:42px;border:1px solid #d7e0eb;border-radius:10px;padding:0 11px;background:#fff;color:#14233d;outline:0;font-size:12px;transition:border-color .15s,box-shadow .15s}
+.photo-settings-card input[type="number"]:focus,.photo-settings-card select:focus,.photo-print-controls input:focus,.photo-print-controls select:focus{border-color:#6d5dfc;box-shadow:0 0 0 3px rgba(109,93,252,.09)}
+.photo-units{gap:6px;margin:9px 0 15px}
+.photo-units .unit{height:38px;display:flex;align-items:center;justify-content:center;padding:0;font-size:11px}
+.photo-dpi-label{margin-bottom:5px!important}
+.photo-note{display:block;font-size:10px;line-height:1.4}
+.photo-settings-card input[type="range"]{width:100%;margin:2px 0 0}
+.photo-settings-card .range-value{font-size:11px;font-weight:800;color:#52617a}
+.photo-settings-card .check-line{min-height:38px;padding:9px 10px;border:1px solid #e0e6ee;border-radius:10px;background:#f8fafc;margin-bottom:13px!important}
+.photo-print-card{gap:12px}
+.photo-print-controls{grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.photo-print-controls label{font-size:11px;line-height:1.2;color:#34445e}
+.photo-print-meta{padding:10px 12px;border-radius:10px;background:#f7f9fc;font-size:11px;line-height:1.4}
+.photo-actions{padding-top:2px}
+.photo-actions button{min-height:44px}
+.photo-filebar{min-height:52px}
+@media(max-width:900px){.utility-shell:has(.photo-tool-shell){width:min(900px,calc(100vw - 30px))}.photo-editor-grid{grid-template-columns:1fr}.photo-canvas-wrap{height:320px}}
+@media(max-width:700px){.photo-purpose-tabs{grid-template-columns:1fr 1fr}.photo-preset-grid{grid-template-columns:1fr 1fr}.photo-print-controls{grid-template-columns:1fr 1fr}.photo-actions{flex-direction:column}.photo-actions button{width:100%}}
+@media(max-width:460px){.utility-shell:has(.photo-tool-shell){width:calc(100vw - 20px);padding:16px}.photo-purpose-tabs,.photo-preset-grid,.photo-print-controls{grid-template-columns:1fr}.photo-canvas-wrap{height:270px}.photo-crop-panel,.photo-settings-card,.photo-print-card{padding:14px}.photo-two-col{grid-template-columns:1fr 1fr}.photo-crop-tools{gap:6px}.photo-crop-tools button{min-width:38px}}
+.dark .photo-crop-panel,.dark .photo-settings-card,.dark .photo-print-card{box-shadow:none}
+.dark .photo-settings-card input[type="number"],.dark .photo-settings-card select,.dark .photo-print-controls input,.dark .photo-print-controls select{background:#111f35;color:#eef4ff;border-color:#2b3d56}
+.dark .photo-settings-card label,.dark .photo-print-controls label{color:#dce6f4}
+.dark .photo-settings-card .check-line,.dark .photo-print-meta{background:#0d1a2e;border-color:#2b3d56}
+.dark .photo-print-meta{color:#aebbd0}
