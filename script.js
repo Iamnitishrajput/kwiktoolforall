@@ -500,7 +500,17 @@ function renderCompressTool(body){
 }
 
 function canvasBlob(c,type,q){return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(Error('Encode failed')),type,q))}
-function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+function downloadBlob(blob,name){
+  if(window.AndroidDownload&&typeof window.AndroidDownload.saveBase64==='function'){
+    const reader=new FileReader();
+    reader.onloadend=()=>window.AndroidDownload.saveBase64(reader.result,name,blob.type||'application/octet-stream');
+    reader.readAsDataURL(blob);
+    return;
+  }
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
 function showCompressPdfSuccess(originalSize,outputSize,pct,compressed){$('utilityBody').innerHTML=`<div class="utility-success compress-final-success"><div class="success-orbit"><div class="success-check" aria-hidden="true"></div></div><span class="success-eyebrow">DOWNLOAD COMPLETE</span><h3>${compressed?'PDF compressed<br><strong>successfully.</strong>':'PDF already<br><strong>optimized.</strong>'}</h3><div class="compress-final-stats"><div><span>Original</span><strong>${formatBytes(originalSize)}</strong></div><div><span>${compressed?'Compressed':'Downloaded'}</span><strong>${formatBytes(outputSize)}</strong></div><div><span>Saved</span><strong>${pct>0?pct.toFixed(1)+'%':'0%'}</strong></div></div><p class="success-sub">Please check your <strong>Downloads</strong> folder.</p><div class="privacy-confirm"><span class="privacy-confirm-icon" aria-hidden="true"></span><div><strong>Your privacy is protected</strong><span>Your PDF was processed locally in your browser and was not uploaded.</span></div></div><button type="button" class="reuse-tool" id="utilityReuse"><span>↻</span> Re-use the tool</button><small class="success-note">No account • No cloud storage • No file retained</small></div>`;$('utilityReuse').onclick=()=>openUtility(window.__utilityId)}
 function showUtilitySuccess(message){$('utilityBody').innerHTML=`<div class="utility-success"><div class="success-orbit"><div class="success-check" aria-hidden="true"></div></div><span class="success-eyebrow">DOWNLOAD COMPLETE</span><h3>Thank you for using<br><strong>KwikToolForAll.</strong></h3><p class="success-main">${message}</p><p class="success-sub">Please check your <strong>Downloads</strong> folder.</p><div class="privacy-confirm"><span class="privacy-confirm-icon" aria-hidden="true"></span><div><strong>Your privacy is protected</strong><span>Your file was processed locally in your browser and was not uploaded.</span></div></div><button type="button" class="reuse-tool" id="utilityReuse"><span>↻</span> Re-use the tool</button><small class="success-note">No account • No cloud storage • No file retained</small></div>`;$('utilityReuse').onclick=()=>openUtility(window.__utilityId)}
 if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
