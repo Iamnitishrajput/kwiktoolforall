@@ -874,3 +874,46 @@ body.tool-page .topbar{position:sticky;top:0;z-index:120;backdrop-filter:blur(16
 .dark .tool-page .tool-workspace,.dark .tool-page .utility-shell{box-shadow:0 24px 70px rgba(0,0,0,.28)}
 .dark .tool-page .workspace-close:hover{background:#20334f}
 .dark .tool-page .tool-page-bottom a{background:#101d34;border-color:#2b3d56}
+
+
+/* V37 Growth — dedicated tool page polish and navigation fix */
+/* A dedicated page must contain exactly one visible tool workspace. */
+.tool-page .tool-modal[aria-hidden="true"]{display:none!important}
+.tool-page .utility-modal[aria-hidden="true"]{display:none!important}
+.tool-page[data-tool-page="image-pdf"] .tool-modal[aria-hidden="false"]{display:block!important}
+.tool-page[data-tool-page="image-pdf"] .utility-modal{display:none!important}
+.tool-page:not([data-tool-page="image-pdf"]) .tool-modal{display:none!important}
+.tool-page:not([data-tool-page="image-pdf"]) .utility-modal[aria-hidden="false"]{display:block!important}
+
+/* One clear back control: the breadcrumb is the only visible back button. */
+.tool-page .workspace-close{display:none!important}
+.tool-page .tool-page-bottom a{display:none!important}
+.tool-page .tool-page-bottom{justify-content:flex-start}
+.tool-page-crumb a{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)!important;text-decoration:none!important;font-size:12px;font-weight:900;box-shadow:0 7px 20px rgba(18,49,91,.06);transition:transform .18s,box-shadow .18s,border-color .18s}
+.tool-page-crumb a:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(18,49,91,.10);border-color:#b9c9df}
+
+/* Larger, more legible controls across every dedicated tool. */
+.tool-page .tool-workspace, .tool-page .utility-shell{font-size:13px}
+.tool-page .tool-workspace label, .tool-page .utility-shell label{font-size:12px}
+.tool-page .tool-workspace input:not([type="checkbox"]):not([type="radio"]), .tool-page .tool-workspace select, .tool-page .utility-shell input:not([type="checkbox"]):not([type="radio"]), .tool-page .utility-shell select{font-size:13px}
+.tool-page .tool-workspace button:not(.workspace-close), .tool-page .utility-shell button:not(.workspace-close){font-size:13px;font-weight:800;border-radius:11px;transition:transform .18s,box-shadow .18s,background-color .18s,border-color .18s,filter .18s}
+.tool-page .tool-workspace button:not(.workspace-close):not(:disabled):hover, .tool-page .utility-shell button:not(.workspace-close):not(:disabled):hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(31,70,125,.12)}
+.tool-page .tool-workspace button:not(.workspace-close):not(:disabled):active, .tool-page .utility-shell button:not(.workspace-close):not(:disabled):active{transform:translateY(0) scale(.985)}
+.tool-page .workspace-head h2{font-size:clamp(32px,4vw,44px)}
+.tool-page .workspace-head p{font-size:14px}
+.tool-page .upload-zone h3, .tool-page .utility-upload h3, .tool-page .merge-dropzone h3, .tool-page .compress-image-upload h3{font-size:16px}
+.tool-page .upload-zone p, .tool-page .utility-upload p, .tool-page .merge-dropzone p, .tool-page .compress-image-upload p{font-size:12px}
+.tool-page .local-pill{font-size:11px}
+.tool-page .text-btn, .tool-page .pages-action-btn, .tool-page .apply-selected-btn, .tool-page .merge-secondary{padding:9px 13px}
+.tool-page .create-pdf, .tool-page .primary-action, .tool-page .utility-actions button{min-height:46px;padding:11px 18px;font-size:14px;font-weight:900;box-shadow:0 9px 22px rgba(25,83,160,.14)}
+.tool-page .choose-files{font-size:13px;font-weight:900;transition:transform .18s,box-shadow .18s,filter .18s}
+.tool-page .choose-files:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(25,83,160,.12)}
+
+@media(max-width:740px){
+  .tool-page .workspace-head h2{font-size:30px}
+  .tool-page .workspace-head p{font-size:12px}
+  .tool-page .tool-workspace, .tool-page .utility-shell{font-size:13px}
+  .tool-page .tool-workspace label, .tool-page .utility-shell label{font-size:11px}
+  .tool-page .tool-workspace input:not([type="checkbox"]):not([type="radio"]), .tool-page .tool-workspace select, .tool-page .utility-shell input:not([type="checkbox"]):not([type="radio"]), .tool-page .utility-shell select{font-size:12px}
+  .tool-page .tool-workspace button:not(.workspace-close), .tool-page .utility-shell button:not(.workspace-close){font-size:12px}
+}
