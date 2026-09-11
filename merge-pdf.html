@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Combine multiple PDF files into one document online. Reorder pages and merge PDFs directly in your browser with KwikToolForAll.">
+<link rel="canonical" href="https://iamnitishrajput.github.io/kwiktoolforall/merge-pdf.html">
+<meta name="robots" content="index,follow">
+<title>Merge PDF Online — Combine PDF Files Free | KwikToolForAll</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=36.1">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="favicon.ico" type="image/x-icon">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Merge PDF — KwikToolForAll","url":"https://iamnitishrajput.github.io/kwiktoolforall/merge-pdf.html","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":"Combine multiple PDF files into one document online. Reorder pages and merge PDFs directly in your browser with KwikToolForAll."}</script>
+</head>
+<body class="tool-page" data-tool-page="merge">
+<header class="topbar" id="home">
+  <a class="brand" href="#home" id="brandHome" aria-label="KwikToolForAll home">
+    <span class="brand-logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><defs><linearGradient id="kg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d8cff"/><stop offset="1" stop-color="#35dbe5"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#kg)"/><path d="M14 11h6v10l10-10h8L27 22l12 15h-8L20 25v12h-6z" fill="white"/></svg>
+    </span>
+    <span class="brand-copy"><b>KwikToolForAll</b><small>Everyday file tools</small></span>
+  </a>
+  <nav class="main-nav" aria-label="Main navigation">
+    <a href="#home" class="nav-link active" id="homeNav">Home</a>
+    <a href="#tools" class="nav-link">Tools</a>
+    <a href="#how" class="nav-link">How it works</a>
+    <a href="#privacy" class="nav-link">Privacy</a>
+    <a href="#faqs" class="nav-link">FAQs</a>
+    <a href="#about" class="nav-link">About</a>
+  </nav>
+  <div class="header-actions">
+    <button class="circle-btn" id="searchFocus" aria-label="Focus search">⌕</button>
+    <button class="circle-btn" id="themeToggle" aria-label="Toggle dark mode" aria-pressed="false">☾</button>
+    <a class="explore-btn" href="#tools">Explore tools <span>→</span></a>
+  </div>
+  <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+</header>
+<main class="tool-page-main">
+  <div class="tool-page-crumb"><span>KwikToolForAll / Merge PDF</span><a href="index.html#tools">← All tools</a></div>
+  <div class="tool-modal" id="toolModal" aria-hidden="true">
+  <div class="tool-modal-backdrop" data-close-tool></div>
+  <section class="tool-workspace" role="dialog" aria-modal="true" aria-labelledby="workspaceTitle">
+    <button class="workspace-close" id="closeTool" aria-label="Close tool">×</button>
+    <div class="workspace-head">
+      <div>
+        <span class="workspace-kicker">PDF TOOL</span>
+        <h2 id="workspaceTitle">Image → PDF</h2>
+        <p>Turn one or more JPG or PNG images into a PDF directly in your browser.</p>
+      </div>
+      <span class="local-pill">● Local processing</span>
+    </div>
+
+    <div class="upload-zone" id="uploadZone" tabindex="0">
+      <div class="upload-icon">↥</div>
+      <h3>Drop your images here</h3>
+      <p>or choose JPG / PNG files from your device</p>
+      <label class="choose-files">Choose images<input id="imageFiles" type="file" accept="image/jpeg,image/png" multiple hidden></label>
+      <small>Your images stay in this browser. PDF creation runs locally — no upload.</small>
+    </div>
+
+    <div class="file-toolbar">
+      <strong id="fileCount">0 images</strong>
+      <button type="button" id="clearImages" class="text-btn">Clear all</button>
+    </div>
+
+    <section class="pdf-pages-section" aria-label="Document pages">
+      <div class="image-list-wrap">
+        <div class="image-list-head">
+          <div>
+            <span class="preview-kicker">DOCUMENT PAGES</span>
+            <strong>Pages</strong>
+          </div>
+          <div class="document-pages-actions">
+            <span id="previewPageCount">0 pages</span>
+            <button type="button" id="selectAllPages" class="pages-action-btn">Select all</button>
+          </div>
+        </div>
+        <div class="bulk-settings" id="bulkSettings" hidden>
+          <strong id="selectedCount">0 selected</strong>
+          <label>Size<select id="bulkSize"><option value="a4">A4</option><option value="letter">Letter</option><option value="image">Image size</option></select></label>
+          <label>Orientation<select id="bulkOrientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+          <label>Margin<select id="bulkMargin"><option value="10">10 mm</option><option value="5">5 mm</option><option value="0">No margin</option></select></label>
+          <button type="button" id="applySelected" class="apply-selected-btn">Apply to selected</button>
+        </div>
+        <div class="image-list" id="imageList"></div>
+      </div>
+    </section>
+
+    <div class="workspace-footer" id="pdfWorkspaceFooter">
+      <span id="pdfStatus">Add images to get started.</span>
+      <button type="button" id="createPdf" class="create-pdf" disabled>Create PDF <span>→</span></button>
+    </div>
+
+    <div class="pdf-success" id="pdfSuccess" hidden>
+      <div class="success-orbit">
+        <div class="success-check" aria-hidden="true"></div>
+      </div>
+      <span class="success-eyebrow">DOWNLOAD COMPLETE</span>
+      <h3>Thank you for using<br><strong>KwikToolForAll.</strong></h3>
+      <p class="success-main">Your file is now downloaded.</p>
+      <p class="success-sub">Please check your <strong>Downloads</strong> folder.</p>
+
+      <div class="privacy-confirm">
+        <span class="privacy-confirm-icon" aria-hidden="true"></span>
+        <div>
+          <strong>Your privacy is protected</strong>
+          <span>Your images were processed locally in your browser and were not uploaded to our servers. Temporary workspace data has been cleared.</span>
+        </div>
+      </div>
+
+      <button type="button" class="reuse-tool" id="reusePdfTool">
+        <span>↻</span> Re-use the tool
+      </button>
+      <small class="success-note">No account • No cloud storage • No file retained</small>
+    </div>
+
+
+  </section>
+</div>
+<div class="utility-modal" id="utilityModal" aria-hidden="true">
+  <div class="tool-modal-backdrop" data-close-utility></div>
+  <section class="tool-workspace utility-shell" role="dialog" aria-modal="true" aria-labelledby="utilityTitle">
+    <button class="workspace-close" id="utilityClose" type="button" aria-label="Close tool">×</button>
+    <div class="workspace-head utility-head">
+      <div><span class="workspace-kicker" id="utilityKicker">FILE TOOL</span><h2 id="utilityTitle">Utility</h2><p id="utilityDesc">Work locally in your browser.</p></div>
+      <span class="local-pill">● Local processing</span>
+    </div>
+    <div id="utilityBody"></div>
+    <div class="utility-footer"><span id="utilityStatus">Ready.</span><button type="button" class="text-btn" id="utilityClear">Clear</button></div>
+  </section>
+</div>
+
+  <div class="tool-page-bottom"><span>Browser-first processing whenever practical • No account required</span><a href="index.html#tools">Explore all tools →</a></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
+<script src="script.js?v=36.1"></script>
+</body>
+</html>

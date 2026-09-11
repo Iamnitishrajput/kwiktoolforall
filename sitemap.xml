@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://iamnitishrajput.github.io/kwiktoolforall/</loc>
-  </url>
+  <url><loc>https://iamnitishrajput.github.io/kwiktoolforall/</loc></url>
+  <url><loc>https://iamnitishrajput.github.io/kwiktoolforall/image-to-pdf.html</loc></url>
+  <url><loc>https://iamnitishrajput.github.io/kwiktoolforall/merge-pdf.html</loc></url>
+  <url><loc>https://iamnitishrajput.github.io/kwiktoolforall/split-pdf.html</loc></url>
+  <url><loc>https://iamnitishrajput.github.io/kwiktoolforall/compress-pdf.html</loc></url>
+  <url><loc>https://iamnitishrajput.github.io/kwiktoolforall/resize-photo.html</loc></url>
+  <url><loc>https://iamnitishrajput.github.io/kwiktoolforall/compress-image.html</loc></url>
 </urlset>

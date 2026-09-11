@@ -9,7 +9,8 @@ const tools=[
 const $=id=>document.getElementById(id), grid=$('toolGrid'), search=$('toolSearch'), empty=$('emptyState'), toast=$('toast');
 function showToast(msg){if(!toast)return;toast.textContent=msg;toast.classList.add('show');clearTimeout(window.__kwikToast);window.__kwikToast=setTimeout(()=>toast.classList.remove('show'),2600)}
 function render(q=''){const term=q.trim().toLowerCase();const list=(term?tools:tools.slice(0,6)).filter(t=>!term||`${t.name} ${t.desc} ${t.keys}`.toLowerCase().includes(term));grid.innerHTML=list.map(t=>`<article class="tool-card"><div class="tool-icon ${t.color}">${t.icon}</div><h3>${t.name}</h3><p>${t.desc}</p><button class="open-tool ${t.color}" data-open="${t.id}">Open tool →</button></article>`).join('');empty.hidden=list.length>0;grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openTool(b.dataset.open))}
-function openTool(id){const t=tools.find(x=>x.id===id);if(!t)return;if(id==='image-pdf'){openImagePdf();return}if(['merge','split','compress-pdf','resize-image','compress-image'].includes(id)){openUtility(id);return}showToast(`${t.name} is not available.`)}
+function toolUrl(id){return ({'image-pdf':'image-to-pdf.html','merge':'merge-pdf.html','split':'split-pdf.html','compress-pdf':'compress-pdf.html','resize-image':'resize-photo.html','compress-image':'compress-image.html'})[id]||'index.html'}
+function openTool(id){const t=tools.find(x=>x.id===id);if(!t)return;if(document.body.classList.contains('tool-page')){if(id==='image-pdf'){openImagePdf();return}if(['merge','split','compress-pdf','resize-image','compress-image'].includes(id)){openUtility(id);return}}else{window.location.href=toolUrl(id)} }
 
 const toolModal=$('toolModal'),imageFiles=$('imageFiles'),uploadZone=$('uploadZone'),imageList=$('imageList'),fileCount=$('fileCount'),createPdf=$('createPdf'),pdfStatus=$('pdfStatus'),clearImages=$('clearImages');
 const pdfSuccess=$('pdfSuccess'),workspaceHead=document.querySelector('.workspace-head'),upload=$('uploadZone'),fileToolbar=document.querySelector('.file-toolbar'),pagesSection=document.querySelector('.pdf-pages-section'),footer=$('pdfWorkspaceFooter');
@@ -22,7 +23,7 @@ function showSuccess(){[workspaceHead,upload,fileToolbar,pagesSection,footer].fo
 function clearWorkspace(){pdfImages.forEach(x=>URL.revokeObjectURL(x.url));pdfImages=[];selected.clear();selectedPage=0;if(imageFiles)imageFiles.value='';closePreview();renderPdfImages();pdfStatus.textContent='Add images to get started.'}
 function openImagePdf(){closeUtility();resetSuccess();toolModal.classList.add('open');toolModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';renderPdfImages();setTimeout(()=>imageFiles.focus(),80)}
 function closeImagePdf(){toolModal.classList.remove('open');toolModal.setAttribute('aria-hidden','true');document.body.style.overflow='';closePreview()}
-$('closeTool').onclick=closeActiveTool;document.querySelector('[data-close-tool]').onclick=closeActiveTool;
+$('closeTool')?.addEventListener('click',closeActiveTool);document.querySelector('[data-close-tool]')?.addEventListener('click',closeActiveTool);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(previewModal?.classList.contains('open'))closePreview();else if($('utilityModal')?.classList.contains('open'))closeUtility();else if(toolModal.classList.contains('open'))closeImagePdf()}});
 imageFiles.addEventListener('change',e=>{addFiles([...e.target.files]);e.target.value='';});
 const chooseFiles=document.querySelector('.choose-files');
@@ -165,9 +166,9 @@ function renderPreview(){
 function dataUrlBytes(u){const b64=u.split(',')[1]||'',bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
 async function createPdfFile(){if(!pdfImages.length)return;createPdf.disabled=true;pdfStatus.textContent='Creating your PDF…';try{const enc=new TextEncoder(),chunks=[],offsets=[0];let pos=0;const push=s=>{const b=typeof s==='string'?enc.encode(s):s;chunks.push(b);pos+=b.length};push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');const objs=[],add=x=>(objs.push(x),objs.length),catalog=add(null),pagesId=add(null),pids=[],cids=[],iids=[];for(const item of pdfImages){const s=getSpec(item),img=new Image();await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=item.url});const pt=72/25.4,w=Math.max(1,Math.round(s.pw*pt)),h=Math.max(1,Math.round(s.ph*pt)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);const fit=Math.min((s.pw-s.mm*2)/s.iw,(s.ph-s.mm*2)/s.ih),dw=s.iw*fit*pt,dh=s.ih*fit*pt;ctx.save();ctx.translate(w/2,h/2);ctx.rotate(item.rotation*Math.PI/180);ctx.drawImage(img,-dw/2,-dh/2,dw,dh);ctx.restore();const jpeg=dataUrlBytes(canvas.toDataURL('image/jpeg',.92));iids.push(add({dict:`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>`,stream:jpeg}));const cb=enc.encode(`q\n${w} 0 0 ${h} 0 0 cm\n/Im0 Do\nQ\n`);cids.push(add({dict:`<< /Length ${cb.length} >>`,stream:cb}));pids.push(add(null))}objs[catalog-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;objs[pagesId-1]=`<< /Type /Pages /Kids [${pids.map(x=>x+' 0 R').join(' ')}] /Count ${pids.length} >>`;for(let i=0;i<pids.length;i++){const id=iids[i],d=objs[id-1].dict,w=Number(d.match(/\/Width (\d+)/)[1]),h=Number(d.match(/\/Height (\d+)/)[1]);objs[pids[i]-1]=`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im0 ${id} 0 R >> >> /Contents ${cids[i]} 0 R >>`}objs.forEach((o,i)=>{offsets[i+1]=pos;push(`${i+1} 0 obj\n`);if(typeof o==='string')push(o+'\nendobj\n');else{push(o.dict+'\nstream\n');push(o.stream);push('\nendstream\nendobj\n')}});const xref=pos;push(`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`);for(let i=1;i<=objs.length;i++)push(String(offsets[i]).padStart(10,'0')+' 00000 n \n');push(`trailer\n<< /Size ${objs.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`);const url=URL.createObjectURL(new Blob(chunks,{type:'application/pdf'})),a=document.createElement('a');a.href=url;a.download=`KwikToolForAll_${new Date().toISOString().slice(0,10)}.pdf`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);clearWorkspace();showSuccess()}catch(e){console.error(e);pdfStatus.textContent='Something went wrong. Your images are still here.';createPdf.disabled=false;showToast('Could not create the PDF. Please try again.')}}
 createPdf.onclick=createPdfFile;
-$('searchForm').onsubmit=e=>{e.preventDefault();render(search.value);$('tools').scrollIntoView({behavior:'smooth',block:'start'})};$('resetSearch').onclick=()=>{search.value='';render()};$('searchFocus').onclick=()=>{search.focus();window.scrollTo({top:0,behavior:'smooth'})};
+if($('searchForm')) $('searchForm').onsubmit=e=>{e.preventDefault();render(search.value);$('tools').scrollIntoView({behavior:'smooth',block:'start'})}; if($('resetSearch')) $('resetSearch').onclick=()=>{search.value='';render()}; if($('searchFocus')) $('searchFocus').onclick=()=>{if(document.body.classList.contains('tool-page')){window.location.href='index.html#tools';return} search.focus();window.scrollTo({top:0,behavior:'smooth'})};
 function syncThemeToggle(){const dark=document.body.classList.contains('dark'),btn=$('themeToggle');if(!btn)return;btn.textContent=dark?'☾':'☀';btn.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');btn.setAttribute('aria-pressed',dark?'true':'false');btn.classList.toggle('is-dark',dark)}
-$('themeToggle').onclick=()=>{document.body.classList.toggle('dark');localStorage.setItem('kwik-theme',document.body.classList.contains('dark')?'dark':'light');syncThemeToggle()};if(localStorage.getItem('kwik-theme')==='dark')document.body.classList.add('dark');syncThemeToggle();$('mobileMenu').onclick=()=>document.querySelector('.main-nav')?.classList.toggle('mobile-open');
+if($('themeToggle')) $('themeToggle').onclick=()=>{document.body.classList.toggle('dark');localStorage.setItem('kwik-theme',document.body.classList.contains('dark')?'dark':'light');syncThemeToggle()};if(localStorage.getItem('kwik-theme')==='dark')document.body.classList.add('dark');syncThemeToggle();if($('mobileMenu')) $('mobileMenu').onclick=()=>document.querySelector('.main-nav')?.classList.toggle('mobile-open');
 /* Stable utilities */
 function openToolModal(){toolModal.classList.add('open');toolModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'}
 function openUtility(id){
@@ -577,11 +578,23 @@ async function jpegBlobsToPdf(blobs,sourcePdf){
 }
 function blobDataUrl(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob)})}
 function closeActiveTool(){if($('utilityModal')?.classList.contains('open')){closeUtility();return}closeImagePdf()}
-$('closeTool').onclick=closeActiveTool;
-document.querySelector('[data-close-tool]').onclick=closeActiveTool;
-$('utilityClose').onclick=closeUtility;
-document.querySelector('[data-close-utility]').onclick=closeUtility;
-$('utilityClear').onclick=()=>{if(window.__utilityId)openUtility(window.__utilityId)};
+$('closeTool')?.addEventListener('click',closeActiveTool);
+document.querySelector('[data-close-tool]')?.addEventListener('click',closeActiveTool);
+$('utilityClose')?.addEventListener('click',closeUtility);
+document.querySelector('[data-close-utility]')?.addEventListener('click',closeUtility);
+$('utilityClear')?.addEventListener('click',()=>{if(window.__utilityId)openUtility(window.__utilityId)});
+
+function closeToHome(){ window.location.href='index.html#tools'; }
+function initToolPage(){
+  const id=document.body.dataset.toolPage; if(!id)return;
+  const back=$('closeTool'); if(back){back.textContent='←';back.setAttribute('aria-label','Back to tools');}
+  const ub=$('utilityClose'); if(ub){ub.textContent='←';ub.setAttribute('aria-label','Back to tools');}
+  back?.addEventListener('click',closeToHome);
+  ub?.addEventListener('click',closeToHome);
+  if(id==='image-pdf') openImagePdf(); else openUtility(id);
+  document.body.style.overflow='';
+}
+initToolPage();
 
 // Homepage navigation: use explicit tool IDs so labels/icons can change without breaking routing.
 const popularLinks=document.querySelectorAll('.popular [data-tool-id]');
@@ -593,6 +606,7 @@ popularLinks.forEach(btn=>btn.addEventListener('click',()=>{
 // Home means the actual beginning of the page, not just changing the URL hash.
 function goHome(e){
   if(e) e.preventDefault();
+  if(document.body.classList.contains('tool-page')){window.location.href='index.html#home';return;}
   document.querySelector('.main-nav')?.classList.remove('mobile-open');
   window.scrollTo({top:0,left:0,behavior:'smooth'});
   history.replaceState(null,'','#home');
@@ -627,4 +641,4 @@ document.addEventListener('click',e=>{
     allToolsDropdown.hidden=true; allToolsToggle?.setAttribute('aria-expanded','false');
   }
 });
-render();
+if(grid) render();
